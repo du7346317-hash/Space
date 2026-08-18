@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Space</title>
+    <title>Chat Plataforma</title>
     <style>
         :root {
-            --bg-primary: #1e1f22;
-            --bg-secondary: #2b2d31;
-            --bg-sidebar: #111214;
-            --bg-chat: #313338;
-            --accent: #5865f2;
+            --bg-primary: #121016;       /* Fundo principal bem escuro com toque roxo */
+            --bg-secondary: #18151f;     /* Painéis e colunas secundárias */
+            --bg-sidebar: #0b0a0e;       /* Barra de servidores (ainda mais escura) */
+            --bg-chat: #16131c;          /* Área de conversas */
+            --accent: #5865f2;           /* Cor de destaque */
             --danger: #ed4245;
-            --text-main: #dbdee1;
-            --text-muted: #949ba4;
+            --text-main: #dcddde;
+            --text-muted: #8e8e93;
             --hover-color: rgba(255, 255, 255, 0.05);
         }
 
@@ -42,6 +42,7 @@
             padding-top: 12px;
             gap: 8px;
             flex-shrink: 0;
+            border-right: 1px solid rgba(255, 255, 255, 0.03);
         }
 
         .server-bubble {
@@ -71,12 +72,13 @@
             display: flex;
             flex-direction: column;
             flex-shrink: 0;
+            border-right: 1px solid rgba(255, 255, 255, 0.03);
         }
 
         .sidebar-header {
             padding: 16px;
             font-weight: bold;
-            border-bottom: 1px solid rgba(0,0,0,0.2);
+            border-bottom: 1px solid rgba(0,0,0,0.3);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -124,7 +126,7 @@
         .chat-header {
             height: 48px;
             padding: 0 16px;
-            border-bottom: 1px solid rgba(0,0,0,0.2);
+            border-bottom: 1px solid rgba(0,0,0,0.3);
             display: flex;
             align-items: center;
             font-weight: bold;
@@ -191,10 +193,11 @@
         }
 
         .chat-input-wrapper {
-            background-color: #383a40;
+            background-color: #1a1622;
             border-radius: 8px;
             display: flex;
             padding: 10px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .chat-input {
@@ -228,7 +231,8 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.7);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .input-group {
@@ -246,7 +250,7 @@
 
         .input-group input {
             background-color: var(--bg-sidebar);
-            border: 1px solid transparent;
+            border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: 4px;
             padding: 10px;
             color: #fff;
@@ -271,11 +275,12 @@
         /* RODAPÉ DO USUÁRIO */
         .user-panel-footer {
             margin-top: auto;
-            background-color: #111214;
+            background-color: var(--bg-sidebar);
             padding: 10px;
             display: flex;
             align-items: center;
             gap: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
         }
     </style>
 </head>
@@ -340,39 +345,39 @@
     </div>
 
     <!-- MODAL DE ADICIONAR AMIGO -->
-    <div class="modal-overlay" id="addFriendModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 3000;">
-        <div class="modal-box" style="background: var(--bg-secondary); padding: 20px; border-radius: 8px; width: 400px;">
+    <div class="modal-overlay" id="addFriendModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 3000;">
+        <div class="modal-box" style="background: var(--bg-secondary); padding: 20px; border-radius: 8px; width: 400px; border: 1px solid rgba(255,255,255,0.05);">
             <h3 style="margin-bottom: 10px; color: var(--text-main);">Adicionar Amigo</h3>
             <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">Adicione amigos informando o nome de usuário exato.</p>
             <div class="input-group" style="margin-bottom: 15px;">
-                <input type="text" id="friendUsernameInput" placeholder="Nome de usuário" style="width: 100%; padding: 10px; border-radius: 4px; border: none; background: var(--bg-primary); color: #fff; outline:none;">
+                <input type="text" id="friendUsernameInput" placeholder="Nome de usuário" style="width: 100%; padding: 10px; border-radius: 4px; border: none; background: var(--bg-sidebar); color: #fff; outline:none;">
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                <button class="btn" style="background: #4e5058;" onclick="closeAddFriendModal()">Cancelar</button>
+                <button class="btn" style="background: #2b2536;" onclick="closeAddFriendModal()">Cancelar</button>
                 <button class="btn" onclick="sendFriendRequest()">Enviar Solicitação</button>
             </div>
         </div>
     </div>
 
     <!-- MODAL DE CRIAR SERVIDOR -->
-    <div class="modal-overlay" id="createServerModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 3000;">
-        <div class="modal-box" style="background: var(--bg-secondary); padding: 20px; border-radius: 8px; width: 400px; text-align: center;">
+    <div class="modal-overlay" id="createServerModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 3000;">
+        <div class="modal-box" style="background: var(--bg-secondary); padding: 20px; border-radius: 8px; width: 400px; text-align: center; border: 1px solid rgba(255,255,255,0.05);">
             <h3 style="margin-bottom: 10px; color: var(--text-main);">Criar um Servidor</h3>
             <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">Seu servidor é onde você e seus amigos conversam.</p>
             <div class="input-group" style="text-align: left; margin-bottom: 15px;">
                 <label style="font-size: 12px; color: var(--text-muted);">Nome do Servidor</label>
-                <input type="text" id="serverNameInput" placeholder="Ex: Servidor da Galera" style="width: 100%; padding: 10px; border-radius: 4px; border: none; background: var(--bg-primary); color: #fff; margin-top: 4px; outline:none;">
+                <input type="text" id="serverNameInput" placeholder="Ex: Servidor da Galera" style="width: 100%; padding: 10px; border-radius: 4px; border: none; background: var(--bg-sidebar); color: #fff; margin-top: 4px; outline:none;">
             </div>
             <div style="display: flex; gap: 10px;">
-                <button class="btn" style="flex:1; background: #4e5058;" onclick="closeCreateServerModal()">Cancelar</button>
+                <button class="btn" style="flex:1; background: #2b2536;" onclick="closeCreateServerModal()">Cancelar</button>
                 <button class="btn" style="flex:1;" onclick="createServer()">Criar</button>
             </div>
         </div>
     </div>
 
     <!-- MODAL DE PERFIL -->
-    <div class="modal-overlay" id="profileModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 3000;">
-        <div class="modal-box" style="background: var(--bg-secondary); padding: 20px; border-radius: 8px; width: 350px; text-align: center;">
+    <div class="modal-overlay" id="profileModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 3000;">
+        <div class="modal-box" style="background: var(--bg-secondary); padding: 20px; border-radius: 8px; width: 350px; text-align: center; border: 1px solid rgba(255,255,255,0.05);">
             <h3 style="margin-bottom: 15px; color: var(--text-main);">Editar Perfil</h3>
             <div class="image-picker" onclick="document.getElementById('profileImageInput').click()" style="cursor: pointer; margin-bottom: 15px;">
                 <div class="preview-box" id="profileImagePreview" style="width: 80px; height: 80px; border-radius: 50%; background: var(--accent); margin: 0 auto 8px auto; display: flex; align-items: center; justify-content: center; font-size: 24px; overflow: hidden; color: #fff;">📷</div>
@@ -381,10 +386,10 @@
             </div>
             <div class="input-group" style="text-align: left; margin-bottom: 15px;">
                 <label style="font-size: 12px; color: var(--text-muted);">Novo Nome de Usuário</label>
-                <input type="text" id="editUsernameInput" placeholder="Seu novo nick" style="width: 100%; padding: 8px; border-radius: 4px; border: none; background: var(--bg-primary); color: #fff; margin-top: 4px; outline:none;">
+                <input type="text" id="editUsernameInput" placeholder="Seu novo nick" style="width: 100%; padding: 8px; border-radius: 4px; border: none; background: var(--bg-sidebar); color: #fff; margin-top: 4px; outline:none;">
             </div>
             <div style="display: flex; gap: 10px;">
-                <button class="btn" style="flex:1; padding: 8px; border-radius: 4px; border: none; cursor: pointer; background: #4e5058; color:#fff;" onclick="closeProfileSettings()">Cancelar</button>
+                <button class="btn" style="flex:1; padding: 8px; border-radius: 4px; border: none; cursor: pointer; background: #2b2536; color:#fff;" onclick="closeProfileSettings()">Cancelar</button>
                 <button class="btn" style="flex:1; padding: 8px; border-radius: 4px; border: none; background: var(--accent); color: #fff; cursor: pointer;" onclick="saveProfileChanges()">Salvar</button>
             </div>
         </div>
