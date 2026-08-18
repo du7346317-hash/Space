@@ -107,26 +107,33 @@ app.post('/api/join', (req, res) => {
 
 // Configuração do WebRTC / Socket.io para Voz e Vídeo/Tela
 io.on('connection', (socket) => {
+    console.log('Usuário conectado:', socket.id);
+
+    // CORREÇÃO: Todos os eventos fora do join-voice para evitar duplicidade
     socket.on('join-voice', (channelId) => {
         socket.join(channelId);
         socket.to(channelId).emit('user-joined-voice', socket.id);
+    });
 
-        socket.on('offer', (payload) => {
-            io.to(payload.target).emit('offer', { target: socket.id, offer: payload.offer });
-        });
+    socket.on('offer', (payload) => {
+        io.to(payload.target).emit('offer', { target: socket.id, offer: payload.offer });
+    });
 
-        socket.on('answer', (payload) => {
-            io.to(payload.target).emit('answer', { target: socket.id, answer: payload.answer });
-        });
+    socket.on('answer', (payload) => {
+        io.to(payload.target).emit('answer', { target: socket.id, answer: payload.answer });
+    });
 
-        socket.on('ice-candidate', (payload) => {
-            io.to(payload.target).emit('ice-candidate', { target: socket.id, candidate: payload.candidate });
-        });
+    socket.on('ice-candidate', (payload) => {
+        io.to(payload.target).emit('ice-candidate', { target: socket.id, candidate: payload.candidate });
+    });
 
-        socket.on('leave-voice', () => {
-            socket.leave(channelId);
-            socket.to(channelId).emit('user-left-voice', socket.id);
-        });
+    socket.on('leave-voice', (channelId) => {
+        socket.leave(channelId);
+        socket.to(channelId).emit('user-left-voice', socket.id);
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Usuário desconectado:', socket.id);
     });
 });
 
