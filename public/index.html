@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Space</title>
+    <title>Chat Plataforma</title>
     <style>
         :root {
             --bg-primary: #1e1f22;
@@ -455,7 +455,6 @@
             const servers = await res.json();
             
             const nav = document.getElementById('serversNav');
-            // Mantém fixos os primeiros elementos (Início e Divisor e Criar)
             nav.innerHTML = `
                 <div class="server-bubble active" onclick="goHome()" title="Início / Amigos">⚡</div>
                 <div style="width: 32px; height: 2px; background: rgba(255,255,255,0.1); border-radius: 1px;"></div>
@@ -577,7 +576,7 @@
                 alert(data.message);
                 closeAddFriendModal();
                 document.getElementById('friendUsernameInput').value = '';
-                goHome(); // Atualiza lista
+                goHome();
             } else {
                 alert(data.error);
             }
