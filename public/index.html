@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Space</title>
+    <title>Chat Plataforma</title>
     <style>
         :root {
             --bg-primary: #313338;
@@ -290,23 +290,21 @@
     </div>
 
     <!-- APLICAÇÃO PRINCIPAL -->
-    <!-- BARRA LATERAL DE SERVIDORES -->
     <div class="servers-nav" id="serversNav">
         <div class="server-bubble active" onclick="goHome()" title="Início / Amigos">⚡</div>
         <div style="width: 32px; height: 2px; background: rgba(255,255,255,0.1); border-radius: 1px;"></div>
-        <!-- Servidores injetados via JS -->
+        <!-- Botão para Criar Servidor -->
+        <div class="server-bubble" onclick="openCreateServerModal()" title="Criar Servidor">+</div>
     </div>
 
-    <!-- BARRA LATERAL DE CANAIS / AMIGOS -->
     <div class="sidebar">
         <div class="sidebar-header" id="sidebarHeaderTitle">
             <span>Amigos & Directs</span>
         </div>
         <div class="sidebar-content" id="sidebarSecondary">
-            <!-- Conteúdo dinâmico preenchido pelo goHome() -->
+            <!-- Conteúdo dinâmico -->
         </div>
         
-        <!-- RODAPÉ DO USUÁRIO LOGADO -->
         <div class="user-panel-footer" id="userFooter">
             <div id="footerAvatar" style="width: 32px; height: 32px; border-radius: 50%; background: var(--accent); display:flex; align-items:center; justify-content:center; font-weight:bold; color:#fff; overflow:hidden;">U</div>
             <div style="flex: 1; overflow: hidden;">
@@ -317,7 +315,6 @@
         </div>
     </div>
 
-    <!-- ÁREA PRINCIPAL DO CHAT -->
     <div class="chat-area">
         <div class="chat-header" id="mainHeader">
             <span>Painel de Amigos</span>
@@ -334,7 +331,38 @@
         </div>
     </div>
 
-    <!-- MODAL DE CONFIGURAÇÕES DE PERFIL -->
+    <!-- MODAL DE ADICIONAR AMIGO -->
+    <div class="modal-overlay" id="addFriendModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 3000;">
+        <div class="modal-box" style="background: var(--bg-secondary); padding: 20px; border-radius: 8px; width: 400px;">
+            <h3 style="margin-bottom: 10px; color: var(--text-main);">Adicionar Amigo</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">Você pode adicionar amigos pelo nome de usuário.</p>
+            <div class="input-group" style="margin-bottom: 15px;">
+                <input type="text" id="friendUsernameInput" placeholder="Nome do usuário" style="width: 100%; padding: 10px; border-radius: 4px; border: none; background: var(--bg-primary); color: #fff; outline:none;">
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button class="btn" style="background: #4e5058;" onclick="closeAddFriendModal()">Cancelar</button>
+                <button class="btn" onclick="sendFriendRequest()">Enviar Solicitação</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE CRIAR SERVIDOR -->
+    <div class="modal-overlay" id="createServerModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 3000;">
+        <div class="modal-box" style="background: var(--bg-secondary); padding: 20px; border-radius: 8px; width: 400px; text-align: center;">
+            <h3 style="margin-bottom: 10px; color: var(--text-main);">Criar um Servidor</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">Seu servidor é onde você e seus amigos conversam.</p>
+            <div class="input-group" style="text-align: left; margin-bottom: 15px;">
+                <label style="font-size: 12px; color: var(--text-muted);">Nome do Servidor</label>
+                <input type="text" id="serverNameInput" placeholder="Ex: Servidor do Gamer" style="width: 100%; padding: 10px; border-radius: 4px; border: none; background: var(--bg-primary); color: #fff; margin-top: 4px; outline:none;">
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn" style="flex:1; background: #4e5058;" onclick="closeCreateServerModal()">Cancelar</button>
+                <button class="btn" style="flex:1;" onclick="createServer()">Criar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE PERFIL -->
     <div class="modal-overlay" id="profileModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 3000;">
         <div class="modal-box" style="background: var(--bg-secondary); padding: 20px; border-radius: 8px; width: 350px; text-align: center;">
             <h3 style="margin-bottom: 15px; color: var(--text-main);">Editar Perfil</h3>
@@ -348,7 +376,7 @@
                 <input type="text" id="editUsernameInput" placeholder="Seu novo nick" style="width: 100%; padding: 8px; border-radius: 4px; border: none; background: var(--bg-primary); color: #fff; margin-top: 4px; outline:none;">
             </div>
             <div style="display: flex; gap: 10px;">
-                <button class="btn btn-secondary" style="flex:1; padding: 8px; border-radius: 4px; border: none; cursor: pointer; background: #4e5058; color:#fff;" onclick="closeProfileSettings()">Cancelar</button>
+                <button class="btn" style="flex:1; padding: 8px; border-radius: 4px; border: none; cursor: pointer; background: #4e5058; color:#fff;" onclick="closeProfileSettings()">Cancelar</button>
                 <button class="btn" style="flex:1; padding: 8px; border-radius: 4px; border: none; background: var(--accent); color: #fff; cursor: pointer;" onclick="saveProfileChanges()">Salvar</button>
             </div>
         </div>
@@ -361,7 +389,6 @@
         let currentUser = null;
         let currentActiveServer = null;
         let currentTextChannel = null;
-        let friendsData = { friends: [], friendRequests: [] };
         let unreadMessages = {};
 
         async function handleLogin() {
@@ -377,6 +404,8 @@
                 currentUser = data.user;
                 document.getElementById('authScreen').style.display = 'none';
                 updateUserUI();
+                
+                socket.emit('register-user', currentUser.id);
                 goHome();
             } else {
                 alert(data.error);
@@ -413,15 +442,9 @@
             }
         }
 
-        async function fetchFriendsData() {
-            // Mock de dados locais de amizade caso precise ser integrado à API completa do seu app
-            friendsData = currentUser.friendsData || { friends: [], friendRequests: [] };
-        }
-
-        async function goHome() {
+        function goHome() {
             currentActiveServer = null;
             currentTextChannel = null;
-            await fetchFriendsData();
 
             document.getElementById('sidebarHeaderTitle').innerHTML = `<span>Amigos & Directs</span>`;
             document.getElementById('mainHeader').innerHTML = `<span>Painel de Amigos</span>`;
@@ -430,10 +453,9 @@
             updateHomeUnreadBadge();
 
             let dmSidebar = `<div class="channel-item active" onclick="goHome()">👥 Lista de Amigos</div>`;
-            dmSidebar += `<div class="category-label">MENSAGENS DIRETAS</div>`;
+            dmSidebar += `<div class="category-label" style="display:flex; justify-content:space-between; align-items:center;">MENSAGENS DIRETAS <span style="cursor:pointer; font-size:14px;" onclick="openAddFriendModal()" title="Adicionar Amigo">+</span></div>`;
             
-            // Renderiza lista de amigos dinamicamente com avatares reais
-            if(currentUser.friends && currentUser.friends.length > 0) {
+            if (currentUser.friends && currentUser.friends.length > 0) {
                 currentUser.friends.forEach(f => {
                     const avatarHtml = f.avatar 
                         ? `<img src="${f.avatar}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;">` 
@@ -457,25 +479,67 @@
             document.getElementById('sidebarSecondary').innerHTML = dmSidebar;
             
             document.getElementById('chatMessages').innerHTML = `
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-muted);">
-                    <h3>Painel Inicial - Selecione uma conversa ou servidor</h3>
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); gap: 10px;">
+                    <h3>Painel Inicial - Lista de Amigos</h3>
+                    <button class="btn" onclick="openAddFriendModal()">Adicionar Novo Amigo</button>
                 </div>
             `;
         }
 
-        async function getInviteLink() {
-            if (!currentActiveServer) return;
-            const res = await fetch(`/api/servers/${currentActiveServer.id}/invite`);
+        function openAddFriendModal() {
+            document.getElementById('addFriendModal').style.display = 'flex';
+        }
+
+        function closeAddFriendModal() {
+            document.getElementById('addFriendModal').style.display = 'none';
+        }
+
+        async function sendFriendRequest() {
+            const friendUsername = document.getElementById('friendUsernameInput').value.trim();
+            if (!friendUsername) return alert('Digite um nome de usuário!');
+
+            const res = await fetch('/api/friends/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: currentUser.id, friendUsername })
+            });
             const data = await res.json();
             if (res.ok) {
-                navigator.clipboard.writeText(data.inviteLink);
-                alert(`Link de convite (${data.inviteLink}) copiado para a área de transferência!`);
+                alert(data.message);
+                closeAddFriendModal();
+                document.getElementById('friendUsernameInput').value = '';
             } else {
-                alert("Erro ao gerar link de convite.");
+                alert(data.error);
             }
         }
 
-        // Funções de Perfil
+        function openCreateServerModal() {
+            document.getElementById('createServerModal').style.display = 'flex';
+        }
+
+        function closeCreateServerModal() {
+            document.getElementById('createServerModal').style.display = 'none';
+        }
+
+        async function createServer() {
+            const name = document.getElementById('serverNameInput').value.trim();
+            if (!name) return alert('Insira um nome para o servidor!');
+
+            const res = await fetch('/api/servers/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, ownerId: currentUser.id })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alert('Servidor criado com sucesso!');
+                closeCreateServerModal();
+                document.getElementById('serverNameInput').value = '';
+            } else {
+                alert(data.error);
+            }
+        }
+
         let selectedProfileImage = null;
 
         function openProfileSettings() {
@@ -537,9 +601,19 @@
 
             socket.emit('join-text', currentTextChannel);
             
-            document.getElementById('mainHeader').innerHTML = `<span>💬 ${friendUsername}</span>`;
+            const avatarHtml = friendAvatar 
+                ? `<img src="${friendAvatar}" style="width:32px;height:32px;border-radius:50%;object-fit:cover; margin-right: 8px;">` 
+                : `<div style="width:32px;height:32px;border-radius:50%;background:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:14px;color:#fff;margin-right:8px;">${friendUsername.charAt(0).toUpperCase()}</div>`;
+
+            document.getElementById('mainHeader').innerHTML = `<div style="display:flex;align-items:center;">${avatarHtml} <span>${friendUsername}</span></div>`;
             document.getElementById('chatInputArea').style.display = 'block';
-            document.getElementById('chatMessages').innerHTML = '';
+            document.getElementById('chatMessages').innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); text-align: center; gap: 8px;">
+                    ${avatarHtml}
+                    <h2 style="color: #fff;">${friendUsername}</h2>
+                    <p>Este é o início da sua conversa direta com ${friendUsername}.</p>
+                </div>
+            `;
         }
 
         function checkSend(event) {
@@ -558,14 +632,13 @@
         }
 
         socket.on('receive-message', (data) => {
-            if (currentTextChannel !== data.channelId) {
-                unreadMessages[data.channelId] = (unreadMessages[data.channelId] || 0) + 1;
-                updateHomeUnreadBadge();
-            }
-
             if (currentTextChannel === data.channelId) {
                 const msgsBox = document.getElementById('chatMessages');
                 if(!msgsBox) return;
+
+                if (msgsBox.querySelector('h2')) {
+                    msgsBox.innerHTML = '';
+                }
 
                 const div = document.createElement('div');
                 div.className = 'message-item';
@@ -588,11 +661,23 @@
             }
         });
 
+        socket.on('notify-unread', (data) => {
+            if (currentTextChannel !== data.channelId) {
+                unreadMessages[data.channelId] = (unreadMessages[data.channelId] || 0) + 1;
+                updateHomeUnreadBadge();
+                if (!currentActiveServer && !currentTextChannel) {
+                    goHome();
+                }
+            }
+        });
+
         socket.on('load-history', (history) => {
             const msgsBox = document.getElementById('chatMessages');
             if(!msgsBox) return;
             
             msgsBox.innerHTML = '';
+            if (history.length === 0) return;
+
             history.forEach(data => {
                 const div = document.createElement('div');
                 div.className = 'message-item';
