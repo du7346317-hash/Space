@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space - Comunidades e Voz</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        :root {
+            --bg-main: #121418;
+            --bg-sidebar: #191c23;
+            --bg-panel: #20242d;
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --danger: #ef4444;
+            --success: #10b981;
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8);
+            display: flex; align-items: center; justify-content: center; z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+        .auth-card, .modal-box {
+            background-color: var(--bg-sidebar); width: 420px; padding: 32px;
+            border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05); display: flex; flex-direction: column; gap: 20px;
+        }
+        .auth-card h2, .modal-box h3 { margin: 0; color: #fff; font-size: 24px; text-align: center; }
+        .input-group { display: flex; flex-direction: column; gap: 6px; }
+        .input-group label { font-size: 13px; font-weight: 500; color: var(--text-muted); }
+        .input-group input {
+            background: var(--bg-main); border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px; border-radius: 8px; color: #fff; font-size: 14px; outline: none; transition: 0.2s;
+        }
+        .input-group input:focus { border-color: var(--accent); }
+        
+        .btn {
+            background-color: var(--accent); color: #fff; border: none; padding: 12px;
+            border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; text-align: center;
+        }
+        .btn:hover { background-color: var(--accent-hover); }
+        .btn-secondary { background: transparent; color: var(--text-muted); }
+        .btn-secondary:hover { color: #fff; }
+        .switch-text { font-size: 13px; text-align: center; color: var(--text-muted); cursor: pointer; }
+        .switch-text span { color: var(--accent); font-weight: 500; }
+
+        .app-container { display: flex; width: 100vw; height: 100vh; }
+
+        .servers-nav {
+            width: 80px; background-color: var(--bg-sidebar); border-right: 1px solid rgba(255,255,255,0.05);
+            display: flex; flex-direction: column; align-items: center; padding-top: 16px; gap: 12px; flex-shrink: 0;
+        }
+        .server-bubble {
+            width: 50px; height: 50px; border-radius: 20px; background-color: var(--bg-panel);
+            display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff;
+            cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
+        }
+        .server-bubble:hover, .server-bubble.active {
+            border-radius: 14px; background-color: var(--accent);
+        }
+        .server-bubble.add-btn { background: rgba(255,255,255,0.03); color: var(--success); border: 2px dashed rgba(16, 185, 129, 0.3); }
+        .server-bubble.add-btn:hover { background: var(--success); color: #fff; border-style: solid; }
+        .server-divider { width: 36px; height: 2px; background: rgba(255,255,255,0.05); border-radius: 2px; }
+
+        .sidebar-panel {
+            width: 260px; background-color: var(--bg-sidebar); display: flex; flex-direction: column; flex-shrink: 0;
+            border-right: 1px solid rgba(255,255,255,0.05);
+        }
+        .sidebar-header-box { 
+            height: 60px; padding: 0 16px; display: flex; align-items: center; justify-content: space-between;
+            font-weight: 700; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; 
+        }
+        .channels-scroll { flex: 1; overflow-y: auto; padding: 16px 12px; display: flex; flex-direction: column; gap: 4px; }
+        .category-label { font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.05em; margin: 16px 8px 6px 8px; text-transform: uppercase; }
+        .channel-item {
+            padding: 10px 12px; border-radius: 8px; color: var(--text-muted); cursor: pointer;
+            display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 500; transition: 0.2s;
+        }
+        .channel-item:hover { background-color: rgba(255,255,255,0.03); color: var(--text-main); }
+
+        /* HUD de Voz no Rodapé */
+        .voice-hud {
+            background-color: #14161b; padding: 12px; border-top: 1px solid rgba(255,255,255,0.05);
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .voice-hud-top { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 600; color: var(--success); }
+        .voice-hud-user-box { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+        .voice-hud-avatar {
+            width: 32px; height: 32px; border-radius: 50%; background: var(--accent);
+            display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: #fff; overflow: hidden; flex-shrink: 0;
+        }
+        .voice-hud-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .voice-hud-meta { display: flex; flex-direction: column; overflow: hidden; flex: 1; }
+        .voice-hud-name { font-size: 13px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .voice-hud-channel { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .voice-hud-actions { display: flex; gap: 6px; margin-top: 4px; }
+        .hud-btn {
+            background: var(--bg-panel); border: none; border-radius: 6px; padding: 8px; color: #fff;
+            cursor: pointer; flex: 1; display: flex; align-items: center; justify-content: center; font-size: 14px; transition: 0.2s;
+        }
+        .hud-btn:hover { background: rgba(255,255,255,0.1); }
+        .hud-btn.danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+        .hud-btn.danger:hover { background: var(--danger); color: #fff; }
+
+        .user-profile-footer {
+            height: 64px; background-color: #15181e; display: flex; align-items: center; padding: 0 12px; gap: 10px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        .user-avatar-circle {
+            width: 38px; height: 38px; border-radius: 50%; background: var(--accent);
+            display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-size: 15px; flex-shrink: 0; overflow: hidden;
+        }
+        .user-avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
+        .user-meta { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+        .user-meta-name { font-size: 14px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .user-meta-status { font-size: 11px; color: var(--success); }
+        .profile-actions { display: flex; gap: 4px; }
+        .profile-icon-btn { background: none; border: none; color: var(--text-muted); padding: 6px; border-radius: 6px; cursor: pointer; }
+        .profile-icon-btn:hover { background: rgba(255,255,255,0.05); color: #fff; }
+
+        .workspace { flex: 1; display: flex; flex-direction: column; background-color: var(--bg-main); }
+        .workspace-header {
+            height: 60px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between;
+            padding: 0 24px; font-weight: 700; color: #fff; font-size: 16px; background-color: var(--bg-sidebar);
+        }
+        .workspace-body { flex: 1; padding: 24px; overflow-y: auto; }
+
+        .call-layout { display: flex; flex-direction: column; height: 100%; gap: 16px; }
+        .users-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; flex: 1; align-content: start; }
+        .user-call-tile {
+            background-color: var(--bg-panel); border-radius: 12px; height: 180px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border: 2px solid transparent; position: relative; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+        }
+        .user-call-tile.speaking { border-color: var(--success); }
+        .tile-avatar { width: 72px; height: 72px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: bold; color: #fff; margin-bottom: 12px; overflow: hidden; }
+        .tile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .tile-name { background: rgba(0,0,0,0.5); padding: 4px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; }
+
+        .image-picker { display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; }
+        .preview-box {
+            width: 90px; height: 90px; border-radius: 50%; background: var(--bg-main);
+            border: 2px dashed rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center;
+            color: var(--accent); font-size: 28px; overflow: hidden; transition: 0.2s;
+        }
+        .preview-box:hover { border-color: var(--accent); }
+        .preview-box img { width: 100%; height: 100%; object-fit: cover; }
+    </style>
+</head>
+<body>
+
+    <div class="modal-overlay" id="authScreen" style="display: flex;">
+        <div class="auth-card" id="loginBox">
+            <h2>Bem-vindo ao Space</h2>
+            <div class="input-group">
+                <label>E-mail</label>
+                <input type="email" id="loginEmail" placeholder="seu@email.com">
+            </div>
+            <div class="input-group">
+                <label>Senha</label>
+                <input type="password" id="loginPassword" placeholder="Sua senha secreta">
+            </div>
+            <button class="btn" onclick="login()">Entrar na Plataforma</button>
+            <div class="switch-text" onclick="toggleAuth()">Não possui uma conta? <span>Cadastre-se</span></div>
+        </div>
+
+        <div class="auth-card" id="registerBox" style="display: none;">
+            <h2>Criar Conta</h2>
+            <div class="input-group">
+                <label>Nome de Usuário</label>
+                <input type="text" id="regUser" placeholder="Ex: CyberKnight">
+            </div>
+            <div class="input-group">
+                <label>E-mail</label>
+                <input type="email" id="regEmail" placeholder="seu@email.com">
+            </div>
+            <div class="input-group">
+                <label>Senha</label>
+                <input type="password" id="regPassword" placeholder="Sua senha secreta">
+            </div>
+            <button class="btn" onclick="register()">Finalizar Cadastro</button>
+            <div class="switch-text" onclick="toggleAuth()">Já tem uma conta? <span>Fazer login</span></div>
+        </div>
+    </div>
+
+    <div class="app-container" id="appLayout" style="display: none;">
+        
+        <div class="servers-nav" id="serversSidebar">
+            <div class="server-bubble active" onclick="goHome()" title="Início & Amigos">⚡</div>
+            <div class="server-divider"></div>
+            <div class="server-bubble add-btn" onclick="openServerModal()" title="Criar Servidor">+</div>
+        </div>
+
+        <div class="sidebar-panel">
+            <div class="sidebar-header-box" id="sidebarHeaderTitle">
+                <span>Mensagens Diretas</span>
+            </div>
+            <div class="channels-scroll" id="sidebarSecondary">
+                <div class="channel-item" style="background: rgba(255,255,255,0.05); color: #fff;" onclick="goHome()">👥 Amigos</div>
+            </div>
+
+            <div id="voiceConnectedWidget" class="voice-hud" style="display: none;">
+                <div class="voice-hud-top">
+                    <span>🟢 Conectado em Voz</span>
+                    <span style="font-size: 10px; color: var(--text-muted);">12ms</span>
+                </div>
+                <div class="voice-hud-user-box">
+                    <div class="voice-hud-avatar" id="voiceHudAvatar">N</div>
+                    <div class="voice-hud-meta">
+                        <span class="voice-hud-name" id="voiceHudNickname">Usuário</span>
+                        <span class="voice-hud-channel" id="activeVoiceName">Space / Sala Principal</span>
+                    </div>
+                </div>
+                <div class="voice-hud-actions">
+                    <button class="hud-btn" onclick="toggleMic()" title="Mutar">🎤</button>
+                    <button class="hud-btn" onclick="toggleDeafen()" title="Surdar">🎧</button>
+                    <button class="hud-btn danger" onclick="leaveVoiceCall()" title="Desconectar">📞</button>
+                </div>
+            </div>
+
+            <div class="user-profile-footer">
+                <div class="user-avatar-circle" id="userAvatarIcon">N</div>
+                <div class="user-meta">
+                    <span class="user-meta-name" id="userNameLabel">Usuário</span>
+                    <span class="user-meta-status">Online</span>
+                </div>
+                <div class="profile-actions">
+                    <button class="profile-icon-btn" onclick="toggleMic()" title="Mic">🎤</button>
+                    <button class="profile-icon-btn" onclick="openProfileSettings()" title="Ajustes">⚙️</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="workspace">
+            <div class="workspace-header" id="mainHeader">Painel Inicial</div>
+            <div class="workspace-body" id="contentBody">
+                <p style="color: var(--text-muted);">Selecione um servidor ou adicione amigos para começar.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="serverModal" style="display: none;">
+        <div class="modal-box">
+            <h3>Criar Novo Servidor</h3>
+            <div class="image-picker" onclick="document.getElementById('serverImageInput').click()">
+                <div class="preview-box" id="imagePreview">📷</div>
+                <span style="font-size: 12px; color: var(--accent);">Adicionar ícone do servidor</span>
+                <input type="file" id="serverImageInput" accept="image/*" style="display: none;" onchange="previewImage(event)">
+            </div>
+            <div class="input-group">
+                <label>Nome do Servidor</label>
+                <input type="text" id="serverNameInput" placeholder="Ex: Base Secreta RP">
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+                <button class="btn btn-secondary" onclick="closeServerModal()">Cancelar</button>
+                <button class="btn" onclick="createServer()">Criar Servidor</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="serverSettingsModal" style="display: none;">
+        <div class="modal-box">
+            <h3>Configurações do Servidor</h3>
+            <div class="input-group">
+                <label>Nome do Servidor</label>
+                <input type="text" id="settingsServerName">
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+                <button class="btn btn-secondary" onclick="closeServerSettings()">Cancelar</button>
+                <button class="btn" onclick="saveServerSettings()">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        let currentUser = { username: '', email: '', avatar: null };
+        let selectedServerImage = null;
+        let selectedProfileImage = null;
+        let currentActiveServer = null;
+        let localStream = null;
+        let friendsList = [];
+
+        function toggleAuth() {
+            const loginBox = document.getElementById('loginBox');
+            const regBox = document.getElementById('registerBox');
+            loginBox.style.display = loginBox.style.display === 'none' ? 'flex' : 'none';
+            regBox.style.display = regBox.style.display === 'none' ? 'flex' : 'none';
+        }
+
+        async function register() {
+            const username = document.getElementById('regUser').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            const res = await fetch('/api/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, email, password }) });
+            const data = await res.json();
+            if (res.ok) { alert(data.message); toggleAuth(); } else { alert(data.error); }
+        }
+
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const res = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+            const data = await res.json();
+            if (res.ok) {
+                currentUser = data.user;
+                currentUser.avatar = null;
+                document.getElementById('authScreen').style.display = 'none';
+                document.getElementById('appLayout').style.display = 'flex';
+                updateUserUI();
+                loadServers();
+                goHome();
+            } else { alert(data.error); }
+        }
+
+        function updateUserUI() {
+            document.getElementById('userNameLabel').textContent = currentUser.username;
+            document.getElementById('voiceHudNickname').textContent = currentUser.username;
+            const avatarContainer = document.getElementById('userAvatarIcon');
+            const voiceAvatarContainer = document.getElementById('voiceHudAvatar');
+
+            if (currentUser.avatar) {
+                avatarContainer.innerHTML = `<img src="${currentUser.avatar}">`;
+                voiceAvatarContainer.innerHTML = `<img src="${currentUser.avatar}">`;
+            } else {
+                avatarContainer.textContent = currentUser.username.charAt(0).toUpperCase();
+                voiceAvatarContainer.textContent = currentUser.username.charAt(0).toUpperCase();
+            }
+        }
+
+        function goHome() {
+            currentActiveServer = null;
+            document.getElementById('sidebarHeaderTitle').innerHTML = `<span>Amigos & Directs</span>`;
+            document.getElementById('sidebarSecondary').innerHTML = `<div class="channel-item" style="background:rgba(255,255,255,0.05); color:#fff;" onclick="goHome()">👥 Lista de Amigos</div>`;
+            document.getElementById('mainHeader').innerHTML = `<span>Painel de Amigos</span>`;
+            
+            let htmlFriends = friendsList.map(f => `<div style="padding: 10px; background:var(--bg-panel); border-radius:8px; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;"><span>👤 ${f}</span><span style="color:var(--success); font-size:12px;">Online</span></div>`).join('');
+            if(friendsList.length === 0) htmlFriends = `<p style="color:var(--text-muted);">Você ainda não adicionou nenhum amigo.</p>`;
+
+            document.getElementById('contentBody').innerHTML = `
+                <div style="display: flex; flex-direction: column; gap: 24px; max-width: 550px;">
+                    <div style="background:var(--bg-sidebar); padding:20px; border-radius:12px; border:1px solid rgba(255,255,255,0.05);">
+                        <h3 style="margin-top:0;">Adicionar Amigo</h3>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="friendNameInput" placeholder="Nome do usuário..." style="flex:1; background:var(--bg-main); border:1px solid rgba(255,255,255,0.1); padding:10px; border-radius:8px; color:#fff; outline:none;">
+                            <button class="btn" onclick="addFriend()">Enviar Pedido</button>
+                        </div>
+                    </div>
+                    <div>
+                        <h3>Seus Amigos (${friendsList.length})</h3>
+                        <div style="margin-top:10px;">${htmlFriends}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function addFriend() {
+            const name = document.getElementById('friendNameInput').value;
+            if(!name) return alert('Insira um nome válido.');
+            if(friendsList.includes(name)) return alert('Este usuário já está na sua lista.');
+            friendsList.push(name);
+            alert(`Amigo ${name} adicionado com sucesso!`);
+            goHome();
+        }
+
+        function openServerModal() { document.getElementById('serverModal').style.display = 'flex'; }
+        function closeServerModal() {
+            document.getElementById('serverModal').style.display = 'none';
+            document.getElementById('serverNameInput').value = '';
+            document.getElementById('imagePreview').innerHTML = '📷';
+            selectedServerImage = null;
+        }
+
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    selectedServerImage = e.target.result;
+                    document.getElementById('imagePreview').innerHTML = `<img src="${selectedServerImage}">`;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function previewProfileImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    selectedProfileImage = e.target.result;
+                    document.getElementById('profileImagePreview').innerHTML = `<img src="${selectedProfileImage}">`;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function createServer() {
+            const name = document.getElementById('serverNameInput').value;
+            if (!name) return alert('Insira um nome válido.');
+            const icon = selectedServerImage || '⚡';
+            const categories = [
+                { name: "TEXTO", channels: [{ name: "geral", type: "text" }] },
+                { name: "VOZ", channels: [{ name: "🎧 Sala de Comando", type: "voice" }] }
+            ];
+            const res = await fetch('/api/servers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, icon, categories }) });
+            if (res.ok) { closeServerModal(); loadServers(); }
+        }
+
+        async function loadServers() {
+            const res = await fetch('/api/servers');
+            const servers = await res.json();
+            const sidebar = document.getElementById('serversSidebar');
+            sidebar.innerHTML = `
+                <div class="server-bubble active" onclick="goHome()" title="Início">⚡</div>
+                <div class="server-divider"></div>
+            `;
+            servers.forEach(srv => {
+                const div = document.createElement('div');
+                div.className = 'server-bubble';
+                div.title = srv.name;
+                div.innerHTML = srv.icon.startsWith('data:image') ? `<img src="${srv.icon}" style="width:100%;height:100%;object-fit:cover;">` : srv.icon;
+                div.onclick = () => selectServer(srv);
+                sidebar.appendChild(div);
+            });
+            const addBtn = document.createElement('div');
+            addBtn.className = 'server-bubble add-btn';
+            addBtn.innerHTML = '+';
+            addBtn.onclick = openServerModal;
+            sidebar.appendChild(addBtn);
+        }
+
+        async function selectServer(server) {
+            currentActiveServer = server;
+            document.getElementById('sidebarHeaderTitle').innerHTML = `
+                <span>${server.name}</span>
+                <button class="profile-icon-btn" onclick="openServerSettingsModal()" title="Configurações do Servidor">⚙️</button>
+            `;
+            document.getElementById('mainHeader').innerHTML = `<span>${server.name}</span>`;
+            
+            let html = `<div style="margin-bottom:12px;"><button class="btn" style="width:100%; padding:8px; font-size:12px;" onclick="getInviteLink()">🔗 Convidar Membros</button></div>`;
+            server.categories.forEach(cat => {
+                html += `<div class="category-label">${cat.name}</div>`;
+                cat.channels.forEach(ch => {
+                    const icon = ch.type === 'voice' ? '🎧' : '#';
+                    html += `<div class="channel-item" onclick="openChannel('${server.id}', '${ch.name}', '${ch.type}')">${icon} ${ch.name}</div>`;
+                });
+            });
+            document.getElementById('sidebarSecondary').innerHTML = html;
+            document.getElementById('contentBody').innerHTML = `<h3>Bem-vindo ao ${server.name}!</h3>`;
+        }
+
+        function openServerSettingsModal() {
+            if(!currentActiveServer) return;
+            document.getElementById('settingsServerName').value = currentActiveServer.name;
+            document.getElementById('serverSettingsModal').style.display = 'flex';
+        }
+        function closeServerSettings() { document.getElementById('serverSettingsModal').style.display = 'none'; }
+        async function saveServerSettings() {
+            const newName = document.getElementById('settingsServerName').value;
+            if(!newName) return;
+            currentActiveServer.name = newName;
+            document.getElementById('mainHeader').innerHTML = `<span>${newName}</span>`;
+            document.getElementById('sidebarHeaderTitle').innerHTML = `<span>${newName}</span><button class="profile-icon-btn" onclick="openServerSettingsModal()">⚙️</button>`;
+            closeServerSettings();
+            alert('Servidor atualizado!');
+        }
+
+        async function getInviteLink() {
+            const res = await fetch(`/api/servers/${currentActiveServer.id}/invite`);
+            const data = await res.json();
+            prompt("Copie o convite exclusivo do Space:", data.inviteLink);
+        }
+
+        async function openChannel(serverId, channelName, type) {
+            document.getElementById('mainHeader').innerHTML = `<span># ${channelName}</span>`;
+            if (type === 'voice') {
+                document.getElementById('contentBody').innerHTML = `
+                    <div class="call-layout">
+                        <div>
+                            <button class="btn" style="background:var(--success);" onclick="startVoice('${channelName}')">Conectar na Chamada</button>
+                        </div>
+                        <div class="users-grid" id="voiceUsersGrid"></div>
+                    </div>
+                `;
+            } else {
+                document.getElementById('contentBody').innerHTML = `<p style="color:var(--text-muted);">Canal de texto: ${channelName}</p>`;
+            }
+        }
+
+        async function startVoice(channelName) {
+            localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+            document.getElementById('activeVoiceName').textContent = `${currentActiveServer ? currentActiveServer.name : 'Space'} / ${channelName}`;
+            document.getElementById('voiceConnectedWidget').style.display = 'flex';
+            socket.emit('join-voice', { channelName, username: currentUser.username });
+        }
+
+        socket.on('update-voice-users', (usersList) => {
+            const grid = document.getElementById('voiceUsersGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            usersList.forEach(user => {
+                const tile = document.createElement('div');
+                tile.className = 'user-call-tile';
+                let avatarContent = user.charAt(0).toUpperCase();
+                if (user === currentUser.username && currentUser.avatar) {
+                    avatarContent = `<img src="${currentUser.avatar}">`;
+                }
+                tile.innerHTML = `
+                    <div class="tile-avatar">${avatarContent}</div>
+                    <div class="tile-name">${user}</div>
+                `;
+                grid.appendChild(tile);
+            });
+        });
+
+        function leaveVoiceCall() {
+            if (localStream) localStream.getTracks().forEach(t => t.stop());
+            document.getElementById('voiceConnectedWidget').style.display = 'none';
+            socket.emit('leave-voice');
+            goHome();
+        }
+
+        function toggleMic() {
+            if (localStream) {
+                const track = localStream.getAudioTracks()[0];
+                if (track) {
+                    track.enabled = !track.enabled;
+                    alert(track.enabled ? "Microfone ativado" : "Microfone mutado");
+                }
+            } else {
+                alert("Você não está em nenhuma chamada.");
+            }
+        }
+
+        function toggleDeafen() { alert("Áudio alternado."); }
+
+        function openProfileSettings() {
+            document.getElementById('mainHeader').innerHTML = `<span>Configurações de Perfil</span>`;
+            const currentAvatarDisplay = currentUser.avatar ? `<img src="${currentUser.avatar}">` : currentUser.username.charAt(0).toUpperCase();
+            
+            document.getElementById('contentBody').innerHTML = `
+                <div style="display:flex; flex-direction:column; gap:16px; max-width:400px;">
+                    <h3>Editar Seu Perfil</h3>
+                    <div class="image-picker" onclick="document.getElementById('profileImageInput').click()">
+                        <div class="preview-box" id="profileImagePreview">${currentAvatarDisplay}</div>
+                        <span style="font-size: 12px; color: var(--accent);">Alterar foto de perfil</span>
+                        <input type="file" id="profileImageInput" accept="image/*" style="display: none;" onchange="previewProfileImage(event)">
+                    </div>
+                    <div class="input-group">
+                        <label>Novo Nickname</label>
+                        <input type="text" id="settingsNewUsername" value="${currentUser.username}">
+                    </div>
+                    <button class="btn" onclick="saveProfileSettings()">Salvar Alterações</button>
+                </div>
+            `;
+        }
+
+        function saveProfileSettings() {
+            const newName = document.getElementById('settingsNewUsername').value;
+            if (!newName) return alert('O nickname não pode ficar vazio.');
+            currentUser.username = newName;
+            if (selectedProfileImage) currentUser.avatar = selectedProfileImage;
+            updateUserUI();
+            alert('Perfil atualizado com sucesso!');
+            goHome();
+        }
+    </script>
+</body>
+</html>
