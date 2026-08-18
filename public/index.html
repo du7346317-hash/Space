@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Space</title>
+    <title>Chat Plataforma</title>
     <style>
         :root {
-            --bg-primary: #313338;
+            --bg-primary: #1e1f22;
             --bg-secondary: #2b2d31;
-            --bg-sidebar: #1e1f22;
+            --bg-sidebar: #111214;
             --bg-chat: #313338;
             --accent: #5865f2;
             --danger: #ed4245;
@@ -32,6 +32,7 @@
             overflow: hidden;
         }
 
+        /* BARRA DE SERVIDORES */
         .servers-nav {
             width: 72px;
             background-color: var(--bg-sidebar);
@@ -63,6 +64,7 @@
             background-color: var(--accent);
         }
 
+        /* SIDEBAR LATERAL */
         .sidebar {
             width: 240px;
             background-color: var(--bg-secondary);
@@ -109,6 +111,7 @@
             letter-spacing: 0.5px;
         }
 
+        /* ÁREA DE CHAT */
         .chat-area {
             flex: 1;
             display: flex;
@@ -203,6 +206,7 @@
             font-size: 15px;
         }
 
+        /* TELA DE AUTENTICAÇÃO */
         .auth-container {
             position: fixed;
             top: 0;
@@ -224,7 +228,7 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
         }
 
         .input-group {
@@ -264,9 +268,10 @@
             opacity: 0.9;
         }
 
+        /* RODAPÉ DO USUÁRIO */
         .user-panel-footer {
             margin-top: auto;
-            background-color: #232428;
+            background-color: #111214;
             padding: 10px;
             display: flex;
             align-items: center;
@@ -276,6 +281,7 @@
 </head>
 <body>
 
+    <!-- TELA DE LOGIN / REGISTRO -->
     <div class="auth-container" id="authScreen">
         <div class="auth-box">
             <h2 style="color: #fff; text-align: center;">Bem-vindo de volta!</h2>
@@ -292,12 +298,14 @@
         </div>
     </div>
 
+    <!-- BARRA LATERAL ESQUERDA (SERVIDORES) -->
     <div class="servers-nav" id="serversNav">
         <div class="server-bubble active" onclick="goHome()" title="Início / Amigos">⚡</div>
         <div style="width: 32px; height: 2px; background: rgba(255,255,255,0.1); border-radius: 1px;"></div>
         <div class="server-bubble" onclick="openCreateServerModal()" title="Criar Servidor">+</div>
     </div>
 
+    <!-- MENU SECUNDÁRIO (CANAIS / AMIGOS) -->
     <div class="sidebar">
         <div class="sidebar-header" id="sidebarHeaderTitle">
             <span>Amigos & Directs</span>
@@ -314,6 +322,7 @@
         </div>
     </div>
 
+    <!-- ÁREA PRINCIPAL DO CHAT -->
     <div class="chat-area">
         <div class="chat-header" id="mainHeader">
             <span>Painel de Amigos</span>
@@ -330,12 +339,13 @@
         </div>
     </div>
 
+    <!-- MODAL DE ADICIONAR AMIGO -->
     <div class="modal-overlay" id="addFriendModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 3000;">
         <div class="modal-box" style="background: var(--bg-secondary); padding: 20px; border-radius: 8px; width: 400px;">
             <h3 style="margin-bottom: 10px; color: var(--text-main);">Adicionar Amigo</h3>
-            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">Você pode adicionar amigos pelo nome de usuário.</p>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">Adicione amigos informando o nome de usuário exato.</p>
             <div class="input-group" style="margin-bottom: 15px;">
-                <input type="text" id="friendUsernameInput" placeholder="Nome do usuário" style="width: 100%; padding: 10px; border-radius: 4px; border: none; background: var(--bg-primary); color: #fff; outline:none;">
+                <input type="text" id="friendUsernameInput" placeholder="Nome de usuário" style="width: 100%; padding: 10px; border-radius: 4px; border: none; background: var(--bg-primary); color: #fff; outline:none;">
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 10px;">
                 <button class="btn" style="background: #4e5058;" onclick="closeAddFriendModal()">Cancelar</button>
@@ -344,13 +354,14 @@
         </div>
     </div>
 
+    <!-- MODAL DE CRIAR SERVIDOR -->
     <div class="modal-overlay" id="createServerModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 3000;">
         <div class="modal-box" style="background: var(--bg-secondary); padding: 20px; border-radius: 8px; width: 400px; text-align: center;">
             <h3 style="margin-bottom: 10px; color: var(--text-main);">Criar um Servidor</h3>
             <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">Seu servidor é onde você e seus amigos conversam.</p>
             <div class="input-group" style="text-align: left; margin-bottom: 15px;">
                 <label style="font-size: 12px; color: var(--text-muted);">Nome do Servidor</label>
-                <input type="text" id="serverNameInput" placeholder="Ex: Servidor do Gamer" style="width: 100%; padding: 10px; border-radius: 4px; border: none; background: var(--bg-primary); color: #fff; margin-top: 4px; outline:none;">
+                <input type="text" id="serverNameInput" placeholder="Ex: Servidor da Galera" style="width: 100%; padding: 10px; border-radius: 4px; border: none; background: var(--bg-primary); color: #fff; margin-top: 4px; outline:none;">
             </div>
             <div style="display: flex; gap: 10px;">
                 <button class="btn" style="flex:1; background: #4e5058;" onclick="closeCreateServerModal()">Cancelar</button>
@@ -359,6 +370,7 @@
         </div>
     </div>
 
+    <!-- MODAL DE PERFIL -->
     <div class="modal-overlay" id="profileModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 3000;">
         <div class="modal-box" style="background: var(--bg-secondary); padding: 20px; border-radius: 8px; width: 350px; text-align: center;">
             <h3 style="margin-bottom: 15px; color: var(--text-main);">Editar Perfil</h3>
@@ -378,6 +390,7 @@
         </div>
     </div>
 
+    <!-- SOCKET.IO CLIENT -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
@@ -400,6 +413,7 @@
                 document.getElementById('authScreen').style.display = 'none';
                 updateUserUI();
                 socket.emit('register-user', currentUser.id);
+                loadServersList();
                 goHome();
             } else {
                 alert(data.error);
@@ -436,9 +450,40 @@
             }
         }
 
+        async function loadServersList() {
+            const res = await fetch(`/api/servers/${currentUser.id}`);
+            const servers = await res.json();
+            
+            const nav = document.getElementById('serversNav');
+            // Mantém fixos os primeiros elementos (Início e Divisor e Criar)
+            nav.innerHTML = `
+                <div class="server-bubble active" onclick="goHome()" title="Início / Amigos">⚡</div>
+                <div style="width: 32px; height: 2px; background: rgba(255,255,255,0.1); border-radius: 1px;"></div>
+            `;
+
+            servers.forEach(srv => {
+                const bubble = document.createElement('div');
+                bubble.className = 'server-bubble';
+                bubble.title = srv.name;
+                bubble.textContent = srv.name.charAt(0).toUpperCase();
+                bubble.onclick = () => openServer(srv);
+                nav.appendChild(bubble);
+            });
+
+            const addBtn = document.createElement('div');
+            addBtn.className = 'server-bubble';
+            addBtn.title = 'Criar Servidor';
+            addBtn.textContent = '+';
+            addBtn.onclick = openCreateServerModal;
+            nav.appendChild(addBtn);
+        }
+
         function goHome() {
             currentActiveServer = null;
             currentTextChannel = null;
+
+            document.querySelectorAll('.server-bubble').forEach(b => b.classList.remove('active'));
+            document.querySelector('.servers-nav .server-bubble').classList.add('active');
 
             document.getElementById('sidebarHeaderTitle').innerHTML = `<span>Amigos & Directs</span>`;
             document.getElementById('mainHeader').innerHTML = `<span>Painel de Amigos</span>`;
@@ -480,6 +525,36 @@
             `;
         }
 
+        function openServer(server) {
+            currentActiveServer = server;
+            document.getElementById('sidebarHeaderTitle').innerHTML = `<span>${server.name}</span>`;
+            
+            let srvSidebar = `<div class="category-label">CANAIS DE TEXTO</div>`;
+            server.channels.forEach(ch => {
+                srvSidebar += `<div class="channel-item" onclick="openServerChannel('${ch.id}', '${ch.name}')"># ${ch.name}</div>`;
+            });
+            document.getElementById('sidebarSecondary').innerHTML = srvSidebar;
+
+            if (server.channels.length > 0) {
+                openServerChannel(server.channels[0].id, server.channels[0].name);
+            }
+        }
+
+        function openServerChannel(channelId, channelName) {
+            currentTextChannel = channelId;
+            socket.emit('join-text', channelId);
+
+            document.getElementById('mainHeader').innerHTML = `<span># ${channelName}</span>`;
+            document.getElementById('chatInputArea').style.display = 'block';
+            document.getElementById('messageInput').placeholder = `Conversar em #${channelName}`;
+            document.getElementById('chatMessages').innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); text-align: center; gap: 8px;">
+                    <h2 style="color: #fff;">Bem-vindo ao canal #${channelName}!</h2>
+                    <p>Este é o início do canal ${channelName} no servidor ${currentActiveServer.name}.</p>
+                </div>
+            `;
+        }
+
         function openAddFriendModal() {
             document.getElementById('addFriendModal').style.display = 'flex';
         }
@@ -502,6 +577,7 @@
                 alert(data.message);
                 closeAddFriendModal();
                 document.getElementById('friendUsernameInput').value = '';
+                goHome(); // Atualiza lista
             } else {
                 alert(data.error);
             }
@@ -529,6 +605,7 @@
                 alert('Servidor criado com sucesso!');
                 closeCreateServerModal();
                 document.getElementById('serverNameInput').value = '';
+                loadServersList();
             } else {
                 alert(data.error);
             }
