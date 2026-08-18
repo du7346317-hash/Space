@@ -306,7 +306,11 @@
             const username = document.getElementById('regUser').value;
             const email = document.getElementById('regEmail').value;
             const password = document.getElementById('regPassword').value;
-            const res = await fetch('/api/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, email, password }) });
+            const res = await fetch('/api/register', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ username, email, password }) 
+            });
             const data = await res.json();
             if (res.ok) { alert(data.message); toggleAuth(); } else { alert(data.error); }
         }
@@ -314,11 +318,14 @@
         async function login() {
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
-            const res = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+            const res = await fetch('/api/login', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ email, password }) 
+            });
             const data = await res.json();
             if (res.ok) {
                 currentUser = data.user;
-                currentUser.avatar = null;
                 document.getElementById('authScreen').style.display = 'none';
                 document.getElementById('appLayout').style.display = 'flex';
                 updateUserUI();
@@ -397,18 +404,6 @@
             }
         }
 
-        function previewProfileImage(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    selectedProfileImage = e.target.result;
-                    document.getElementById('profileImagePreview').innerHTML = `<img src="${selectedProfileImage}">`;
-                }
-                reader.readAsDataURL(file);
-            }
-        }
-
         async function createServer() {
             const name = document.getElementById('serverNameInput').value;
             if (!name) return alert('Insira um nome válido.');
@@ -417,7 +412,11 @@
                 { name: "TEXTO", channels: [{ name: "geral", type: "text" }] },
                 { name: "VOZ", channels: [{ name: "🎧 Sala de Comando", type: "voice" }] }
             ];
-            const res = await fetch('/api/servers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, icon, categories }) });
+            const res = await fetch('/api/servers', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ name, icon, categories }) 
+            });
             if (res.ok) { closeServerModal(); loadServers(); }
         }
 
@@ -491,94 +490,34 @@
             if (type === 'voice') {
                 document.getElementById('contentBody').innerHTML = `
                     <div class="call-layout">
-                        <div>
-                            <button class="btn" style="background:var(--success);" onclick="startVoice('${channelName}')">Conectar na Chamada</button>
+                        <div class="users-grid" id="callGrid">
+                            <div class="user-call-tile">
+                                <div class="tile-avatar" id="callMyAvatar">U</div>
+                                <div class="tile-name">${currentUser.username} (Você)</div>
+                            </div>
                         </div>
-                        <div class="users-grid" id="voiceUsersGrid"></div>
+                        <button class="btn danger" style="align-self: center;" onclick="leaveVoiceCall()">Desconectar da Chamada</button>
                     </div>
                 `;
+                joinVoiceChannel(channelName);
             } else {
-                document.getElementById('contentBody').innerHTML = `<p style="color:var(--text-muted);">Canal de texto: ${channelName}</p>`;
+                document.getElementById('contentBody').innerHTML = `<p style="color:var(--text-muted);">Canal de texto: #${channelName}</p>`;
             }
         }
 
-        async function startVoice(channelName) {
-            localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-            document.getElementById('activeVoiceName').textContent = `${currentActiveServer ? currentActiveServer.name : 'Space'} / ${channelName}`;
+        function joinVoiceChannel(channelName) {
             document.getElementById('voiceConnectedWidget').style.display = 'flex';
-            socket.emit('join-voice', { channelName, username: currentUser.username });
+            document.getElementById('activeVoiceName').textContent = channelName;
         }
-
-        socket.on('update-voice-users', (usersList) => {
-            const grid = document.getElementById('voiceUsersGrid');
-            if (!grid) return;
-            grid.innerHTML = '';
-            usersList.forEach(user => {
-                const tile = document.createElement('div');
-                tile.className = 'user-call-tile';
-                let avatarContent = user.charAt(0).toUpperCase();
-                if (user === currentUser.username && currentUser.avatar) {
-                    avatarContent = `<img src="${currentUser.avatar}">`;
-                }
-                tile.innerHTML = `
-                    <div class="tile-avatar">${avatarContent}</div>
-                    <div class="tile-name">${user}</div>
-                `;
-                grid.appendChild(tile);
-            });
-        });
 
         function leaveVoiceCall() {
-            if (localStream) localStream.getTracks().forEach(t => t.stop());
             document.getElementById('voiceConnectedWidget').style.display = 'none';
-            socket.emit('leave-voice');
             goHome();
         }
 
-        function toggleMic() {
-            if (localStream) {
-                const track = localStream.getAudioTracks()[0];
-                if (track) {
-                    track.enabled = !track.enabled;
-                    alert(track.enabled ? "Microfone ativado" : "Microfone mutado");
-                }
-            } else {
-                alert("Você não está em nenhuma chamada.");
-            }
-        }
-
-        function toggleDeafen() { alert("Áudio alternado."); }
-
-        function openProfileSettings() {
-            document.getElementById('mainHeader').innerHTML = `<span>Configurações de Perfil</span>`;
-            const currentAvatarDisplay = currentUser.avatar ? `<img src="${currentUser.avatar}">` : currentUser.username.charAt(0).toUpperCase();
-            
-            document.getElementById('contentBody').innerHTML = `
-                <div style="display:flex; flex-direction:column; gap:16px; max-width:400px;">
-                    <h3>Editar Seu Perfil</h3>
-                    <div class="image-picker" onclick="document.getElementById('profileImageInput').click()">
-                        <div class="preview-box" id="profileImagePreview">${currentAvatarDisplay}</div>
-                        <span style="font-size: 12px; color: var(--accent);">Alterar foto de perfil</span>
-                        <input type="file" id="profileImageInput" accept="image/*" style="display: none;" onchange="previewProfileImage(event)">
-                    </div>
-                    <div class="input-group">
-                        <label>Novo Nickname</label>
-                        <input type="text" id="settingsNewUsername" value="${currentUser.username}">
-                    </div>
-                    <button class="btn" onclick="saveProfileSettings()">Salvar Alterações</button>
-                </div>
-            `;
-        }
-
-        function saveProfileSettings() {
-            const newName = document.getElementById('settingsNewUsername').value;
-            if (!newName) return alert('O nickname não pode ficar vazio.');
-            currentUser.username = newName;
-            if (selectedProfileImage) currentUser.avatar = selectedProfileImage;
-            updateUserUI();
-            alert('Perfil atualizado com sucesso!');
-            goHome();
-        }
+        function toggleMic() { alert('Microfone alternado'); }
+        function toggleDeafen() { alert('Áudio alternado'); }
+        function openProfileSettings() { alert('Configurações de perfil'); }
     </script>
 </body>
 </html>
