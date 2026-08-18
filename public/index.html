@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Space - Comunidades e Voz</title>
+    <title>Space</title>
     <script src="/socket.io/socket.io.js"></script>
     <style>
         :root {
@@ -261,32 +261,51 @@
             const username = document.getElementById('regUser').value;
             const email = document.getElementById('regEmail').value;
             const password = document.getElementById('regPassword').value;
-            const res = await fetch('/api/register', { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ username, email, password }) 
-            });
-            const data = await res.json();
-            if (res.ok) { alert(data.message); toggleAuth(); } else { alert(data.error); }
+
+            try {
+                const res = await fetch('/api/register', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ username, email, password }) 
+                });
+                const data = await res.json();
+                if (res.ok) { 
+                    alert(data.message); 
+                    toggleAuth(); 
+                } else { 
+                    alert(data.error || 'Erro ao registrar'); 
+                }
+            } catch (err) {
+                console.error('Erro de conexão:', err);
+                alert('Não foi possível conectar ao servidor.');
+            }
         }
 
         async function login() {
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
-            const res = await fetch('/api/login', { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ email, password }) 
-            });
-            const data = await res.json();
-            if (res.ok) {
-                currentUser = data.user;
-                document.getElementById('authScreen').style.display = 'none';
-                document.getElementById('appLayout').style.display = 'flex';
-                updateUserUI();
-                loadServers();
-                goHome();
-            } else { alert(data.error); }
+
+            try {
+                const res = await fetch('/api/login', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ email, password }) 
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    currentUser = data.user;
+                    document.getElementById('authScreen').style.display = 'none';
+                    document.getElementById('appLayout').style.display = 'flex';
+                    updateUserUI();
+                    loadServers();
+                    goHome();
+                } else { 
+                    alert(data.error || 'E-mail ou senha incorretos.'); 
+                }
+            } catch (err) {
+                console.error('Erro de conexão:', err);
+                alert('Não foi possível conectar ao servidor.');
+            }
         }
 
         function updateUserUI() {
@@ -319,7 +338,6 @@
             document.getElementById('sidebarHeaderTitle').innerHTML = `<span>Amigos & Directs</span>`;
             document.getElementById('mainHeader').innerHTML = `<span>Painel de Amigos</span>`;
             
-            // Monta a lista de amigos na barra lateral esquerda (DMs)
             let dmSidebar = `<div class="channel-item active" onclick="goHome()">👥 Lista de Amigos</div>`;
             dmSidebar += `<div class="category-label">MENSAGENS DIRETAS</div>`;
             friendsData.friends.forEach(f => {
@@ -328,7 +346,6 @@
             });
             document.getElementById('sidebarSecondary').innerHTML = dmSidebar;
 
-            // Painel central de pedidos recebidos (Pendentes)
             let requestsHtml = '';
             if (friendsData.requests.length === 0) {
                 requestsHtml = `<p style="color:var(--text-muted); font-size:13px;">Nenhum pedido de amizade pendente.</p>`;
@@ -353,7 +370,6 @@
                 });
             }
 
-            // Renderiza o corpo do painel inicial
             document.getElementById('contentBody').innerHTML = `
                 <div style="padding: 24px; display: flex; flex-direction: column; gap: 24px; max-width: 600px;">
                     <div style="background:var(--bg-sidebar); padding:20px; border-radius:12px; border:1px solid rgba(255,255,255,0.05);">
@@ -425,7 +441,6 @@
             `;
         }
 
-        // Modais do Botão "+"
         function openServerModal() {
             document.getElementById('joinServerModal').style.display = 'flex';
         }
@@ -524,7 +539,6 @@
             document.getElementById('contentBody').innerHTML = `<div style="padding:24px;"><h3>Bem-vindo ao ${server.name}!</h3>Selecione um canal na lateral.</div>`;
         }
 
-        // Renderização e Edição de Categorias e Canais
         function renderServerChannels() {
             let html = `<div style="margin-bottom:12px;"><button class="btn" style="width:100%; padding:8px; font-size:12px;" onclick="addCategoryPrompt()">+ Nova Categoria</button></div>`;
             
