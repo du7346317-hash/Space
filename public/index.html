@@ -290,19 +290,23 @@
     </div>
 
     <!-- APLICAÇÃO PRINCIPAL -->
+    <!-- BARRA LATERAL DE SERVIDORES -->
     <div class="servers-nav" id="serversNav">
         <div class="server-bubble active" onclick="goHome()" title="Início / Amigos">⚡</div>
         <div style="width: 32px; height: 2px; background: rgba(255,255,255,0.1); border-radius: 1px;"></div>
+        <!-- Servidores injetados via JS -->
     </div>
 
+    <!-- BARRA LATERAL DE CANAIS / AMIGOS -->
     <div class="sidebar">
         <div class="sidebar-header" id="sidebarHeaderTitle">
             <span>Amigos & Directs</span>
         </div>
         <div class="sidebar-content" id="sidebarSecondary">
-            <!-- Conteúdo dinâmico -->
+            <!-- Conteúdo dinâmico preenchido pelo goHome() -->
         </div>
         
+        <!-- RODAPÉ DO USUÁRIO LOGADO -->
         <div class="user-panel-footer" id="userFooter">
             <div id="footerAvatar" style="width: 32px; height: 32px; border-radius: 50%; background: var(--accent); display:flex; align-items:center; justify-content:center; font-weight:bold; color:#fff; overflow:hidden;">U</div>
             <div style="flex: 1; overflow: hidden;">
@@ -313,6 +317,7 @@
         </div>
     </div>
 
+    <!-- ÁREA PRINCIPAL DO CHAT -->
     <div class="chat-area">
         <div class="chat-header" id="mainHeader">
             <span>Painel de Amigos</span>
@@ -329,7 +334,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE PERFIL -->
+    <!-- MODAL DE CONFIGURAÇÕES DE PERFIL -->
     <div class="modal-overlay" id="profileModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 3000;">
         <div class="modal-box" style="background: var(--bg-secondary); padding: 20px; border-radius: 8px; width: 350px; text-align: center;">
             <h3 style="margin-bottom: 15px; color: var(--text-main);">Editar Perfil</h3>
@@ -343,7 +348,7 @@
                 <input type="text" id="editUsernameInput" placeholder="Seu novo nick" style="width: 100%; padding: 8px; border-radius: 4px; border: none; background: var(--bg-primary); color: #fff; margin-top: 4px; outline:none;">
             </div>
             <div style="display: flex; gap: 10px;">
-                <button class="btn" style="flex:1; padding: 8px; border-radius: 4px; border: none; cursor: pointer; background: #4e5058; color:#fff;" onclick="closeProfileSettings()">Cancelar</button>
+                <button class="btn btn-secondary" style="flex:1; padding: 8px; border-radius: 4px; border: none; cursor: pointer; background: #4e5058; color:#fff;" onclick="closeProfileSettings()">Cancelar</button>
                 <button class="btn" style="flex:1; padding: 8px; border-radius: 4px; border: none; background: var(--accent); color: #fff; cursor: pointer;" onclick="saveProfileChanges()">Salvar</button>
             </div>
         </div>
@@ -372,9 +377,6 @@
                 currentUser = data.user;
                 document.getElementById('authScreen').style.display = 'none';
                 updateUserUI();
-                
-                // Registra o ID no socket para receber notificações em tempo real
-                socket.emit('register-user', currentUser.id);
                 goHome();
             } else {
                 alert(data.error);
@@ -411,9 +413,15 @@
             }
         }
 
+        async function fetchFriendsData() {
+            // Mock de dados locais de amizade caso precise ser integrado à API completa do seu app
+            friendsData = currentUser.friendsData || { friends: [], friendRequests: [] };
+        }
+
         async function goHome() {
             currentActiveServer = null;
             currentTextChannel = null;
+            await fetchFriendsData();
 
             document.getElementById('sidebarHeaderTitle').innerHTML = `<span>Amigos & Directs</span>`;
             document.getElementById('mainHeader').innerHTML = `<span>Painel de Amigos</span>`;
@@ -424,7 +432,8 @@
             let dmSidebar = `<div class="channel-item active" onclick="goHome()">👥 Lista de Amigos</div>`;
             dmSidebar += `<div class="category-label">MENSAGENS DIRETAS</div>`;
             
-            if (currentUser.friends && currentUser.friends.length > 0) {
+            // Renderiza lista de amigos dinamicamente com avatares reais
+            if(currentUser.friends && currentUser.friends.length > 0) {
                 currentUser.friends.forEach(f => {
                     const avatarHtml = f.avatar 
                         ? `<img src="${f.avatar}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;">` 
@@ -454,6 +463,19 @@
             `;
         }
 
+        async function getInviteLink() {
+            if (!currentActiveServer) return;
+            const res = await fetch(`/api/servers/${currentActiveServer.id}/invite`);
+            const data = await res.json();
+            if (res.ok) {
+                navigator.clipboard.writeText(data.inviteLink);
+                alert(`Link de convite (${data.inviteLink}) copiado para a área de transferência!`);
+            } else {
+                alert("Erro ao gerar link de convite.");
+            }
+        }
+
+        // Funções de Perfil
         let selectedProfileImage = null;
 
         function openProfileSettings() {
@@ -515,19 +537,9 @@
 
             socket.emit('join-text', currentTextChannel);
             
-            const avatarHtml = friendAvatar 
-                ? `<img src="${friendAvatar}" style="width:32px;height:32px;border-radius:50%;object-fit:cover; margin-right: 8px;">` 
-                : `<div style="width:32px;height:32px;border-radius:50%;background:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:14px;color:#fff;margin-right:8px;">${friendUsername.charAt(0).toUpperCase()}</div>`;
-
-            document.getElementById('mainHeader').innerHTML = `<div style="display:flex;align-items:center;">${avatarHtml} <span>${friendUsername}</span></div>`;
+            document.getElementById('mainHeader').innerHTML = `<span>💬 ${friendUsername}</span>`;
             document.getElementById('chatInputArea').style.display = 'block';
-            document.getElementById('chatMessages').innerHTML = `
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); text-align: center; gap: 8px;">
-                    ${avatarHtml}
-                    <h2 style="color: #fff;">${friendUsername}</h2>
-                    <p>Este é o início da sua conversa direta com ${friendUsername}.</p>
-                </div>
-            `;
+            document.getElementById('chatMessages').innerHTML = '';
         }
 
         function checkSend(event) {
@@ -545,16 +557,15 @@
             }
         }
 
-        // Evento disparado quando qualquer mensagem chega via socket na sala ativa
         socket.on('receive-message', (data) => {
+            if (currentTextChannel !== data.channelId) {
+                unreadMessages[data.channelId] = (unreadMessages[data.channelId] || 0) + 1;
+                updateHomeUnreadBadge();
+            }
+
             if (currentTextChannel === data.channelId) {
                 const msgsBox = document.getElementById('chatMessages');
                 if(!msgsBox) return;
-
-                // Limpa o estado vazio inicial se houver
-                if (msgsBox.querySelector('h2')) {
-                    msgsBox.innerHTML = '';
-                }
 
                 const div = document.createElement('div');
                 div.className = 'message-item';
@@ -577,24 +588,11 @@
             }
         });
 
-        // Evento de notificação global para mensagens em chats que não estão abertos no momento
-        socket.on('notify-unread', (data) => {
-            if (currentTextChannel !== data.channelId) {
-                unreadMessages[data.channelId] = (unreadMessages[data.channelId] || 0) + 1;
-                updateHomeUnreadBadge();
-                if (!currentActiveServer && !currentTextChannel) {
-                    goHome();
-                }
-            }
-        });
-
         socket.on('load-history', (history) => {
             const msgsBox = document.getElementById('chatMessages');
             if(!msgsBox) return;
             
             msgsBox.innerHTML = '';
-            if (history.length === 0) return;
-
             history.forEach(data => {
                 const div = document.createElement('div');
                 div.className = 'message-item';
