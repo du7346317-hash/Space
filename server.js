@@ -6,26 +6,23 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-app.use(express.json({ limit: '10mb' })); // Aumentado limite para aceitar imagens em Base64
-app.use(express.static('public'));
+app.use(express.json());
+app.use(express.static(__dirname));
 
-// Simulação de Banco de Dados em Memória
+// Banco de dados simulado em memória
 let users = [];
 let servers = [];
-let directMessages = {}; // Armazena o histórico das DMs: { 'id1-DM-id2': [ {user, text, time} ] }
-let serverMessages = {}; // Armazena o histórico dos canais de texto: { channelId: [ {user, text, time} ] }
+let messages = {}; // Mapeia channelId ou conversationId para um array de mensagens
 
-// ==========================================
-// ROTAS DE USUÁRIOS E PERFIL
-// ==========================================
+// Rotas de Autenticação e Usuários
 app.post('/api/users/register', (req, res) => {
     const { username, email, password } = req.body;
     if (!username || !email || !password) {
-        return res.status(400).json({ error: 'Preencha todos os campos.' });
+        return res.status(400).json({ error: 'Preencha todos os campos!' });
     }
     
     if (users.find(u => u.email === email)) {
-        return res.status(400).json({ error: 'E-mail já cadastrado.' });
+        return res.status(400).json({ error: 'E-mail já cadastrado!' });
     }
 
     const newUser = {
@@ -34,101 +31,132 @@ app.post('/api/users/register', (req, res) => {
         email,
         password,
         avatar: null,
-        status: 'online',
-        friends: [],
-        friendRequests: []
+        friends: []
     };
 
     users.push(newUser);
-    res.json({ message: 'Usuário cadastrado com sucesso!', user: newUser });
+    res.json({ message: 'Conta criada com sucesso!' });
 });
 
 app.post('/api/users/login', (req, res) => {
     const { email, password } = req.body;
     const user = users.find(u => u.email === email && u.password === password);
+    
     if (!user) {
-        return res.status(400).json({ error: 'E-mail ou senha incorretos.' });
+        return res.status(400).json({ error: 'E-mail ou senha incorretos!' });
     }
-    res.json({ message: 'Login bem-sucedido!', user });
+
+    // Retorna o usuário sem a senha
+    const { password: _, ...safeUser } = user;
+    res.json({ user: safeUser });
 });
 
 app.put('/api/users/profile', (req, res) => {
-    try {
-        const { userId, username, avatar } = req.body;
-        const user = users.find(u => u.id === userId);
-        if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' });
+    const { userId, username, avatar } = req.body;
+    const user = users.find(u => u.id === userId);
 
-        if (username) user.username = username.trim();
-        if (avatar !== undefined) user.avatar = avatar;
+    if (!user) return res.status(404).json({ error: 'Usuário não encontrado!' });
 
-        res.json({ 
-            message: 'Perfil atualizado com sucesso!', 
-            user: { 
-                id: user.id, 
-                username: user.username, 
-                email: user.email, 
-                avatar: user.avatar, 
-                status: user.status, 
-                friends: user.friends,
-                friendRequests: user.friendRequests 
-            } 
-        });
-    } catch (error) {
-        console.error("Erro ao atualizar perfil:", error);
-        res.status(500).json({ error: 'Erro interno ao atualizar perfil.' });
+    user.username = username || user.username;
+    user.avatar = avatar !== undefined ? avatar : user.avatar;
+
+    const { password: _, ...safeUser } = user;
+    res.json({ message: 'Perfil atualizado com sucesso!', user: safeUser });
+});
+
+// Rotas de Amigos
+app.post('/api/friends/add', (req, res) => {
+    const { userId, friendUsername } = req.body;
+    const user = users.find(u => u.id === userId);
+    const friend = users.find(u => u.username === friendUsername);
+
+    if (!friend) {
+        return res.status(404).json({ error: 'Usuário não encontrado!' });
     }
+
+    if (user.id === friend.id) {
+        return res.status(400).json({ error: 'Você não pode adicionar a si mesmo!' });
+    }
+
+    if (user.friends.some(f => f.id === friend.id)) {
+        return res.status(400).json({ error: 'Vocês já são amigos!' });
+    }
+
+    // Adiciona reciprocamente
+    user.friends.push({ id: friend.id, username: friend.username, avatar: friend.avatar });
+    friend.friends.push({ id: user.id, username: user.username, avatar: user.avatar });
+
+    res.json({ message: `Amigo ${friend.username} adicionado com sucesso!` });
 });
 
-// ==========================================
-// ROTAS DE SERVIDORES E CONVITES
-// ==========================================
-app.get('/api/servers/:serverId/invite', (req, res) => {
-    const server = servers.find(s => s.id === req.params.serverId);
-    if (!server) return res.status(404).json({ error: 'Servidor não encontrado.' });
-    
-    res.json({ inviteLink: server.inviteCode });
+// Rotas de Servidores
+app.post('/api/servers/create', (req, res) => {
+    const { name, ownerId } = req.body;
+    if (!name) return res.status(400).json({ error: 'Nome do servidor obrigatório!' });
+
+    const newServer = {
+        id: 'srv_' + Date.now(),
+        name,
+        ownerId,
+        channels: [
+            { id: 'chan_general_' + Date.now(), name: 'geral', type: 'text' }
+        ],
+        members: [ownerId]
+    };
+
+    servers.push(newServer);
+    res.json({ message: 'Servidor criado com sucesso!', server: newServer });
 });
 
-// ==========================================
-// SOCKET.IO (Persistência e Mensagens em Tempo Real)
-// ==========================================
+app.get('/api/servers/:userId', (req, res) => {
+    const userServers = servers.filter(s => s.members.includes(req.params.userId));
+    res.json(userServers);
+});
+
+// WebSocket (Socket.io) para Mensagens em Tempo Real
 io.on('connection', (socket) => {
     console.log('Um usuário se conectou:', socket.id);
+
+    socket.on('register-user', (userId) => {
+        socket.join(userId);
+    });
 
     socket.on('join-text', (channelId) => {
         socket.join(channelId);
         
-        // Envia o histórico correspondente (seja DM ou canal de servidor)
-        const history = directMessages[channelId] || serverMessages[channelId] || [];
-        socket.emit('load-history', history);
+        // Envia o histórico de mensagens se existir
+        if (!messages[channelId]) messages[channelId] = [];
+        socket.emit('load-history', messages[channelId]);
     });
 
     socket.on('send-message', (data) => {
         const { channelId, text, user } = data;
-        const messageData = { 
-            user, 
-            text, 
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
-        };
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        const messageData = { user, text, time, channelId };
 
-        // Salva na estrutura correta dependendo se é DM ou Canal de Servidor
+        if (!messages[channelId]) messages[channelId] = [];
+        messages[channelId].push(messageData);
+
+        // Envia para todos no canal/conversa
+        io.to(channelId).emit('receive-message', messageData);
+
+        // Se for mensagem direta, notifica o outro usuário caso não esteja na sala
         if (channelId.includes('-DM-')) {
-            if (!directMessages[channelId]) directMessages[channelId] = [];
-            directMessages[channelId].push(messageData);
-        } else {
-            if (!serverMessages[channelId]) serverMessages[channelId] = [];
-            serverMessages[channelId].push(messageData);
+            const participants = channelId.split('-DM-');
+            const recipientId = participants.find(id => id !== user.id);
+            if (recipientId) {
+                io.to(recipientId).emit('notify-unread', { channelId });
+            }
         }
-
-        io.to(channelId).emit('receive-message', { ...messageData, channelId });
     });
 
     socket.on('disconnect', () => {
-        console.log('Usuário desconectado:', socket.id);
+        console.log('Usuário desconectado');
     });
 });
 
 const PORT = 3000;
 server.listen(PORT, () => {
-    console.log(`Servidor rodando na porta ${PORT}`);
+    console.log(`Servidor rodando na porta ${PORT}! Acesse http://localhost:${PORT}`);
 });
