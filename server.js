@@ -12,7 +12,7 @@ app.use(express.static(__dirname));
 // Banco de dados simulado em memória
 let users = [];
 let servers = [];
-let messages = {}; // Mapeia channelId ou conversationId para um array de mensagens
+let messages = {}; // Mapeia channelId ou o conversationId para um array de mensagens
 
 // Rotas de Autenticação e Usuários
 app.post('/api/users/register', (req, res) => {
