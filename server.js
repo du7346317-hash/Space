@@ -30,7 +30,7 @@ app.post('/api/register', async (req, res) => {
         username,
         email,
         password: hashedPassword,
-        avatar: '🌌',
+        avatar: null,
         status: 'Online',
         friends: []
     };
