@@ -1,18 +1,25 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
 app.use(express.json());
-app.use(express.static(__dirname));
+// Configura o Express para servir os arquivos da pasta 'public'
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Rota padrão explícita para garantir o carregamento do index.html
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // Banco de dados simulado em memória
 let users = [];
 let servers = [];
-let messages = {}; // Mapeia channelId ou o conversationId para um array de mensagens
+let messages = {}; // Mapeia channelId ou conversationId para um array de mensagens
 
 // Rotas de Autenticação e Usuários
 app.post('/api/users/register', (req, res) => {
@@ -46,7 +53,6 @@ app.post('/api/users/login', (req, res) => {
         return res.status(400).json({ error: 'E-mail ou senha incorretos!' });
     }
 
-    // Retorna o usuário sem a senha
     const { password: _, ...safeUser } = user;
     res.json({ user: safeUser });
 });
@@ -82,7 +88,6 @@ app.post('/api/friends/add', (req, res) => {
         return res.status(400).json({ error: 'Vocês já são amigos!' });
     }
 
-    // Adiciona reciprocamente
     user.friends.push({ id: friend.id, username: friend.username, avatar: friend.avatar });
     friend.friends.push({ id: user.id, username: user.username, avatar: user.avatar });
 
@@ -124,7 +129,6 @@ io.on('connection', (socket) => {
     socket.on('join-text', (channelId) => {
         socket.join(channelId);
         
-        // Envia o histórico de mensagens se existir
         if (!messages[channelId]) messages[channelId] = [];
         socket.emit('load-history', messages[channelId]);
     });
@@ -138,10 +142,8 @@ io.on('connection', (socket) => {
         if (!messages[channelId]) messages[channelId] = [];
         messages[channelId].push(messageData);
 
-        // Envia para todos no canal/conversa
         io.to(channelId).emit('receive-message', messageData);
 
-        // Se for mensagem direta, notifica o outro usuário caso não esteja na sala
         if (channelId.includes('-DM-')) {
             const participants = channelId.split('-DM-');
             const recipientId = participants.find(id => id !== user.id);
@@ -156,7 +158,7 @@ io.on('connection', (socket) => {
     });
 });
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`Servidor rodando na porta ${PORT}! Acesse http://localhost:${PORT}`);
+    console.log(`Servidor rodando na porta ${PORT}!`);
 });
