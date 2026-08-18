@@ -91,6 +91,20 @@
         .preview-box { width: 90px; height: 90px; border-radius: 50%; background: var(--bg-main); border: 2px dashed rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 28px; overflow: hidden; transition: 0.2s; }
         .preview-box:hover { border-color: var(--accent); }
         .preview-box img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Estilos do Chat de Texto */
+        .chat-container { display: flex; flex-direction: column; height: 100%; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+        .message-item { display: flex; gap: 12px; }
+        .message-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); flex-shrink: 0; display:flex; align-items:center; justify-content:center; font-weight:bold; overflow:hidden;}
+        .message-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .message-content { display: flex; flex-direction: column; }
+        .message-header { display: flex; align-items: baseline; gap: 8px; }
+        .message-author { font-weight: 600; font-size: 15px; color: #fff; }
+        .message-time { font-size: 11px; color: var(--text-muted); }
+        .message-text { color: #dcddde; font-size: 14px; margin-top: 4px; line-height: 1.4; word-break: break-word;}
+        .chat-input-wrapper { padding: 0 0 10px 0; }
+        .chat-input { width: 100%; background: var(--bg-sidebar); border: none; padding: 16px; border-radius: 8px; color: #fff; font-size: 14px; outline: none; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -179,28 +193,35 @@
 
         <div class="workspace">
             <div class="workspace-header" id="mainHeader">Painel Inicial</div>
-            <div class="workspace-body" id="contentBody">
-                <p style="color: var(--text-muted);">Selecione um servidor ou adicione amigos para começar.</p>
+            <div class="workspace-body" id="contentBody" style="padding:0;">
+                <div style="padding: 24px;"><p style="color: var(--text-muted);">Selecione um servidor ou adicione amigos para começar.</p></div>
             </div>
         </div>
     </div>
 
+    <!-- MODAL DE CRIAR OU ENTRAR NO SERVIDOR -->
     <div class="modal-overlay" id="serverModal" style="display: none;">
         <div class="modal-box">
             <h3>Criar Novo Servidor</h3>
             <div class="image-picker" onclick="document.getElementById('serverImageInput').click()">
                 <div class="preview-box" id="imagePreview">📷</div>
-                <span style="font-size: 12px; color: var(--accent);">Adicionar ícone do servidor</span>
+                <span style="font-size: 12px; color: var(--accent);">Adicionar ícone</span>
                 <input type="file" id="serverImageInput" accept="image/*" style="display: none;" onchange="previewImage(event)">
             </div>
             <div class="input-group">
-                <label>Nome do Servidor</label>
-                <input type="text" id="serverNameInput" placeholder="Ex: Base Secreta RP">
+                <input type="text" id="serverNameInput" placeholder="Nome: Ex Base Secreta RP">
             </div>
-            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
-                <button class="btn btn-secondary" onclick="closeServerModal()">Cancelar</button>
-                <button class="btn" onclick="createServer()">Criar Servidor</button>
+            <button class="btn" onclick="createServer()">Criar Servidor</button>
+            
+            <hr style="border-color: rgba(255,255,255,0.05); margin: 15px 0;">
+            
+            <h3>Entrar em um Servidor</h3>
+            <div class="input-group">
+                <input type="text" id="inviteCodeInput" placeholder="Cole o código de convite aqui (Ex: space-xyz)">
             </div>
+            <button class="btn" style="background: var(--success);" onclick="joinServerWithCode()">Entrar com Convite</button>
+            
+            <button class="btn btn-secondary" style="margin-top:10px;" onclick="closeServerModal()">Cancelar / Fechar</button>
         </div>
     </div>
 
@@ -220,11 +241,12 @@
 
     <script>
         const socket = io();
-        let currentUser = { username: '', email: '', avatar: null };
+        let currentUser = { id: '', username: '', email: '', avatar: null };
         let selectedServerImage = null;
         let currentActiveServer = null;
         let friendsList = [];
         let currentVoiceChannel = null;
+        let currentTextChannel = null;
 
         function toggleAuth() {
             const loginBox = document.getElementById('loginBox');
@@ -282,6 +304,7 @@
 
         function goHome() {
             currentActiveServer = null;
+            currentTextChannel = null;
             document.getElementById('sidebarHeaderTitle').innerHTML = `<span>Amigos & Directs</span>`;
             document.getElementById('sidebarSecondary').innerHTML = `<div class="channel-item" style="background:rgba(255,255,255,0.05); color:#fff;" onclick="goHome()">👥 Lista de Amigos</div>`;
             document.getElementById('mainHeader').innerHTML = `<span>Painel de Amigos</span>`;
@@ -290,7 +313,7 @@
             if(friendsList.length === 0) htmlFriends = `<p style="color:var(--text-muted);">Você ainda não adicionou nenhum amigo.</p>`;
 
             document.getElementById('contentBody').innerHTML = `
-                <div style="display: flex; flex-direction: column; gap: 24px; max-width: 550px;">
+                <div style="padding: 24px; display: flex; flex-direction: column; gap: 24px; max-width: 550px;">
                     <div style="background:var(--bg-sidebar); padding:20px; border-radius:12px; border:1px solid rgba(255,255,255,0.05);">
                         <h3 style="margin-top:0;">Adicionar Amigo</h3>
                         <div style="display: flex; gap: 10px;">
@@ -319,6 +342,7 @@
         function closeServerModal() {
             document.getElementById('serverModal').style.display = 'none';
             document.getElementById('serverNameInput').value = '';
+            document.getElementById('inviteCodeInput').value = '';
             document.getElementById('imagePreview').innerHTML = '📷';
             selectedServerImage = null;
         }
@@ -335,24 +359,48 @@
             }
         }
 
+        // Criar Servidor - Agora passa o userId
         async function createServer() {
             const name = document.getElementById('serverNameInput').value;
             if (!name) return alert('Insira um nome válido.');
             const icon = selectedServerImage || '⚡';
             const categories = [
                 { name: "TEXTO", channels: [{ name: "geral", type: "text" }] },
-                { name: "VOZ", channels: [{ name: "Sala de Comando", type: "voice" }] }
+                { name: "VOZ", channels: [{ name: "Sala Principal", type: "voice" }] }
             ];
             const res = await fetch('/api/servers', { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ name, icon, categories }) 
+                body: JSON.stringify({ name, icon, categories, userId: currentUser.id }) 
             });
             if (res.ok) { closeServerModal(); loadServers(); }
         }
 
+        // Entrar em Servidor via Código
+        async function joinServerWithCode() {
+            let code = document.getElementById('inviteCodeInput').value.trim();
+            if(!code) return alert("Cole o código primeiro!");
+            
+            if(code.includes('invite=')) code = code.split('invite=')[1];
+
+            const res = await fetch('/api/join', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ inviteCode: code, userId: currentUser.id })
+            });
+            const data = await res.json();
+            if(res.ok) {
+                alert(data.message);
+                closeServerModal();
+                loadServers();
+            } else {
+                alert(data.error);
+            }
+        }
+
+        // Load Servers - Puxa só os que o jogador está na lista
         async function loadServers() {
-            const res = await fetch('/api/servers');
+            const res = await fetch('/api/servers?userId=' + currentUser.id);
             const servers = await res.json();
             const sidebar = document.getElementById('serversSidebar');
             sidebar.innerHTML = `
@@ -382,7 +430,7 @@
             `;
             document.getElementById('mainHeader').innerHTML = `<span>${server.name}</span>`;
             
-            let html = `<div style="margin-bottom:12px;"><button class="btn" style="width:100%; padding:8px; font-size:12px;" onclick="getInviteLink()">🔗 Convidar Membros</button></div>`;
+            let html = `<div style="margin-bottom:12px;"><button class="btn" style="width:100%; padding:8px; font-size:12px;" onclick="getInviteLink()">🔗 Copiar Convite</button></div>`;
             server.categories.forEach(cat => {
                 html += `<div class="category-label">${cat.name}</div>`;
                 cat.channels.forEach(ch => {
@@ -391,7 +439,7 @@
                 });
             });
             document.getElementById('sidebarSecondary').innerHTML = html;
-            document.getElementById('contentBody').innerHTML = `<h3>Bem-vindo ao ${server.name}!</h3>`;
+            document.getElementById('contentBody').innerHTML = `<div style="padding:24px;"><h3>Bem-vindo ao ${server.name}!</h3>Selecione um canal na lateral.</div>`;
         }
 
         function openServerSettingsModal() {
@@ -415,17 +463,17 @@
         async function getInviteLink() {
             const res = await fetch(`/api/servers/${currentActiveServer.id}/invite`);
             const data = await res.json();
-            prompt("Copie o convite exclusivo do Space:", data.inviteLink);
+            prompt("Mande este código para o seu amigo colocar no botão '+':", data.inviteLink.split('invite=')[1]);
         }
 
-        // CORREÇÃO: Função openChannel completada
+        // Abre os canais e configura Chat de Texto Real
         function openChannel(serverId, channelName, type) {
             document.getElementById('mainHeader').innerHTML = `<span># ${channelName}</span>`;
+            const uniqueChannelId = serverId + '-' + channelName;
             
             if (type === 'voice') {
-                const uniqueChannelId = serverId + '-' + channelName;
                 document.getElementById('contentBody').innerHTML = `
-                    <div class="call-layout">
+                    <div class="call-layout" style="padding:24px;">
                         <div class="users-grid" id="callGrid">
                             <div class="user-call-tile">
                                 <div class="tile-avatar" id="callMyAvatar">
@@ -438,23 +486,70 @@
                 `;
                 joinVoiceCall(uniqueChannelId, channelName);
             } else {
+                currentTextChannel = uniqueChannelId;
+                socket.emit('join-text', currentTextChannel);
+                
                 document.getElementById('contentBody').innerHTML = `
-                    <div style="display:flex; flex-direction:column; height:100%; justify-content:flex-end;">
-                        <p style="color: var(--text-muted); padding-bottom:20px;">Bem-vindo ao início do canal #${channelName}!</p>
-                        <input type="text" placeholder="Conversar em #${channelName}" style="width:100%; background:var(--bg-sidebar); border:none; padding:16px; border-radius:8px; color:#fff; font-size:14px; outline:none; box-sizing:border-box;">
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chatMessages">
+                            <p style="color: var(--text-muted); font-size: 13px;">Bem-vindo ao início do canal #${channelName}!</p>
+                        </div>
+                        <div class="chat-input-wrapper">
+                            <input type="text" id="chatInputBox" class="chat-input" placeholder="Conversar em #${channelName}" onkeydown="handleChatInput(event)">
+                        </div>
                     </div>
                 `;
             }
         }
 
-        // Funções WebRTC / Controle de Voz faltantes adicionadas
+        // Recebendo mensagens do servidor via Socket
+        socket.on('receive-message', (data) => {
+            if (currentTextChannel === data.channelId) {
+                const msgsBox = document.getElementById('chatMessages');
+                
+                const div = document.createElement('div');
+                div.className = 'message-item';
+                
+                const avatarChar = data.user.avatar ? `<img src="${data.user.avatar}">` : data.user.username.charAt(0).toUpperCase();
+                
+                div.innerHTML = `
+                    <div class="message-avatar">${avatarChar}</div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-author">${data.user.username}</span>
+                            <span class="message-time">Agora</span>
+                        </div>
+                        <div class="message-text">${data.text}</div>
+                    </div>
+                `;
+                
+                msgsBox.appendChild(div);
+                msgsBox.scrollTop = msgsBox.scrollHeight;
+            }
+        });
+
+        function handleChatInput(event) {
+            if (event.key === 'Enter') {
+                const text = event.target.value.trim();
+                if (!text || !currentTextChannel) return;
+                
+                // Envia para o servidor
+                socket.emit('send-message', {
+                    channelId: currentTextChannel,
+                    text: text,
+                    user: { username: currentUser.username, avatar: currentUser.avatar }
+                });
+                
+                event.target.value = ''; // Limpa a barra
+            }
+        }
+
         function joinVoiceCall(channelId, channelName) {
             currentVoiceChannel = channelId;
             document.getElementById('voiceConnectedWidget').style.display = 'flex';
             document.getElementById('activeVoiceName').textContent = channelName;
             
             socket.emit('join-voice', channelId);
-            console.log(`Entrou na sala de voz: ${channelId}`);
         }
 
         function leaveVoiceCall() {
@@ -466,18 +561,9 @@
             goHome();
         }
 
-        function toggleMic() {
-            alert("Microfone Mutado/Desmutado!");
-            // Aqui entraria a lógica de localStream.getAudioTracks()[0].enabled = !estado
-        }
-
-        function toggleDeafen() {
-            alert("Áudio do aplicativo mutado!");
-        }
-
-        function openProfileSettings() {
-            alert("Painel de configurações em construção!");
-        }
+        function toggleMic() { alert("Microfone Mutado/Desmutado!"); }
+        function toggleDeafen() { alert("Áudio do aplicativo mutado!"); }
+        function openProfileSettings() { alert("Painel de configurações em construção!"); }
 
     </script>
 </body>
