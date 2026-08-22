@@ -1,62 +1,68 @@
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
-const nodemailer = require('nodemailer');
-const crypto = require('crypto');
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plataforma Neon</title>
+  <style>
+    body {
+      background-color: #0F172A;
+      color: #F8FAFC;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .join-panel {
+      background-color: #1E293B;
+      padding: 24px;
+      border-radius: 12px;
+      text-align: center;
+    }
+    .input-field {
+      width: 90%;
+      padding: 12px;
+      margin: 10px 0;
+      background: #0F172A;
+      border: 1px solid #334155;
+      color: white;
+      border-radius: 6px;
+    }
+    .btn {
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      border-radius: 6px;
+      background-color: #10B981;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn:disabled { background-color: #555; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <div class="join-panel">
+    <h3>Painel Inicial</h3>
+    <input type="text" id="invite-link" class="input-field" placeholder="Cole o link do servidor aqui...">
+    <div>
+      <button class="btn">Criar Servidor</button>
+      <button class="btn" id="btn-enter" disabled>Entrar</button>
+    </div>
+  </div>
 
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: '*' } });
+  <!-- Puxando o client do WebSocket direto do provedor -->
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script>
+    const socket = io();
+    const input = document.getElementById('invite-link');
+    const btnEnter = document.getElementById('btn-enter');
 
-app.use(express.json());
-
-// Transporter do Nodemailer para envio de e-mails de verificação
-const transporter = nodemailer.createTransport({
-  service: 'gmail', // ou o provedor SMTP de sua escolha
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
-
-// Rota de Cadastro com envio de confirmação
-app.post('/api/auth/register', async (req, res) => {
-  const { username, email, password } = req.body;
-  const token = crypto.randomBytes(32).toString('hex');
-
-  // 1. Salvar usuário no BD com is_verified = false e token de verificação
-  // 2. Enviar e-mail de confirmação
-  const verifyLink = `http://localhost:3000/api/auth/verify?token=${token}`;
-  
-  await transporter.sendMail({
-    from: '"Sua Plataforma" <no-reply@suaplataforma.com>',
-    to: email,
-    subject: 'Confirme seu e-mail para ativar a conta',
-    html: `<p>Olá ${username}, clique no link para ativar sua conta:</p><a href="${verifyLink}">${verifyLink}</a>`
-  });
-
-  res.json({ message: 'E-mail de verificação enviado! Verifique sua caixa de entrada.' });
-});
-
-// Socket.io: Gerenciamento em Tempo Real & WebRTC Voice Indicator
-io.on('connection', (socket) => {
-  console.log('Usuário conectado:', socket.id);
-
-  // Entrar em um canal de voz
-  socket.on('join-voice-channel', ({ channelId, userId }) => {
-    socket.join(`voice-${channelId}`);
-    socket.to(`voice-${channelId}`).emit('user-connected', userId);
-  });
-
-  // Indicador de Voz (Borda Verde)
-  socket.on('speaking-status', ({ userId, isSpeaking, channelId }) => {
-    io.to(`voice-${channelId}`).emit('user-speaking', { userId, isSpeaking });
-  });
-
-  // Sinalização WebRTC (Oferta, Resposta, Candidatos ICE)
-  socket.on('webrtc-signal', ({ to, signal, from }) => {
-    io.to(to).emit('webrtc-signal', { signal, from });
-  });
-});
-
-server.listen(3000, () => console.log('Servidor rodando na porta 3000'));
+    input.addEventListener('input', () => {
+      btnEnter.disabled = input.value.trim() === '';
+    });
+  </script>
+</body>
+</html>
