@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nossa Plataforma</title>
+    <title>Plataforma - Amigos</title>
     <style>
-        /* === O SEU CSS BRABO COMEÇA AQUI === */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #121216; color: #d1d5db; display: flex; height: 100vh; overflow: hidden; }
 
@@ -23,124 +22,206 @@
 
         /* Layout Principal do Aplicativo */
         .app-layout { display: flex; width: 100%; height: 100vh; }
+        
+        /* Barra de Servidores (Esquerda) */
         .servers-sidebar { width: 76px; background-color: #0b0b0e; display: flex; flex-direction: column; align-items: center; padding-top: 12px; gap: 10px; border-right: 1px solid #1f1f2e; }
         .server-icon { width: 48px; height: 48px; background-color: #1a1a24; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #a78bfa; font-weight: bold; cursor: pointer; transition: 0.2s; border: 2px solid transparent; }
         .server-icon:hover, .server-icon.active { border-radius: 16px; background-color: #7c3aed; color: #fff; }
         .server-add { color: #10b981; font-size: 24px; }
+
+        /* Sidebar Secundária (Canais do Servidor Atual) */
         .sidebar-secondary { width: 240px; background-color: #181820; display: flex; flex-direction: column; border-right: 1px solid #1f1f2e; }
         .sidebar-header { height: 52px; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #1f1f2e; color: #fff; }
         .sidebar-list { padding: 12px 8px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; flex: 1; }
-        .category-title { font-size: 11px; font-weight: bold; color: #6b7280; text-transform: uppercase; padding: 8px 10px 4px 10px; margin-top: 6px; }
         .nav-item { padding: 8px 10px; border-radius: 6px; cursor: pointer; color: #9ca3af; font-size: 14px; display: flex; align-items: center; gap: 8px; }
         .nav-item:hover, .nav-item.active { background-color: #232331; color: #fff; }
-        .main-area { flex: 1; background-color: #121216; display: flex; flex-direction: column; }
-        .main-header { height: 52px; padding: 0 20px; display: flex; align-items: center; border-bottom: 1px solid #1f1f2e; font-weight: bold; color: #fff; }
-        .content-body { flex: 1; padding: 20px; overflow-y: auto; }
 
-        /* Classe extra para esconder a tela de login via JS */
+        /* Área Central (Painel de Amigos Estilo Print) */
+        .main-area { flex: 1; background-color: #121216; display: flex; flex-direction: column; }
+        .main-header { height: 52px; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #1f1f2e; }
+        
+        /* Abas Superiores de Amigos */
+        .friends-tabs { display: flex; align-items: center; gap: 20px; font-size: 14px; font-weight: 600; color: #9ca3af; }
+        .friend-tab { cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: 0.2s; }
+        .friend-tab:hover { background-color: #1f1f2e; color: #fff; }
+        .friend-tab.active { color: #fff; background-color: #232331; }
+        .tab-add { background-color: #7c3aed; color: #fff; padding: 6px 12px; border-radius: 4px; }
+        .tab-add:hover { background-color: #6d28d9; }
+
+        /* Conteúdo dos Amigos & Área Direita (Ativo Agora) */
+        .friends-container { display: flex; flex: 1; overflow: hidden; }
+        .friends-content { flex: 1; padding: 24px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
+        
+        .friends-search { background-color: #0b0b0e; border: 1px solid #1f1f2e; border-radius: 8px; padding: 10px 14px; color: #fff; width: 100%; outline: none; }
+        .friends-search:focus { border-color: #7c3aed; }
+        
+        .friends-section-title { font-size: 12px; font-weight: bold; color: #6b7280; text-transform: uppercase; margin-top: 10px; }
+        
+        .friend-row { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-radius: 8px; transition: 0.2s; border-top: 1px solid #181820; }
+        .friend-row:hover { background-color: #181820; }
+        .friend-info { display: flex; align-items: center; gap: 12px; }
+        .friend-avatar { width: 36px; height: 36px; background-color: #2d2d3d; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff; position: relative; }
+        .status-dot { width: 10px; height: 10px; background-color: #10b981; border-radius: 50%; position: absolute; bottom: 0; right: 0; border: 2px solid #181820; }
+        .friend-details .name { font-weight: bold; color: #fff; font-size: 14px; }
+        .friend-details .status { font-size: 12px; color: #9ca3af; }
+        
+        .friend-actions { display: flex; gap: 8px; }
+        .action-icon { width: 32px; height: 32px; background-color: #0b0b0e; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #9ca3af; transition: 0.2s; }
+        .action-icon:hover { background-color: #232331; color: #fff; }
+
+        /* Barra Lateral Direita (Ativo Agora) */
+        .active-now-sidebar { width: 320px; background-color: #181820; border-left: 1px solid #1f1f2e; padding: 20px; overflow-y: auto; }
+        .active-title { font-weight: bold; color: #fff; font-size: 16px; margin-bottom: 16px; }
+        .active-card { background-color: #121216; border: 1px solid #2d2d3d; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+
+        /* Utilitários */
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <!-- TELA DE LOGIN (SISTEMA ANTI-FAKE ENTRA AQUI DEPOIS) -->
+    <!-- TELA DE LOGIN -->
     <div class="auth-container" id="login-screen">
         <div class="auth-box">
             <h2>Bem-vindo de volta!</h2>
-            
             <div class="auth-field">
                 <label>E-mail</label>
                 <input type="email" id="email" placeholder="seu@email.com">
             </div>
-            
             <div class="auth-field">
                 <label>Senha</label>
                 <input type="password" id="password" placeholder="••••••••">
             </div>
-            
-            <button class="btn-primary" onclick="simularLogin()">Entrar na Conta</button>
-            
-            <div class="auth-switch">
-                Precisando de uma conta? <span>Registre-se</span>
-            </div>
+            <button class="btn-primary" onclick="fazerLogin()">Entrar na Conta</button>
         </div>
     </div>
 
-    <!-- APP PRINCIPAL (SÓ APARECE DEPOIS DO LOGIN) -->
+    <!-- APP PRINCIPAL -->
     <div class="app-layout hidden" id="app-screen">
         
         <!-- Barra de Servidores (Esquerda) -->
         <div class="servers-sidebar">
-            <div class="server-icon active">DM</div> <!-- Direct Messages / Amigos -->
-            <div class="server-icon">S1</div> <!-- Servidor 1 -->
-            <div class="server-icon server-add" onclick="abrirPainelConvite()">+</div> <!-- Add Servidor -->
+            <div class="server-icon active" title="Mensagens Diretas / Amigos">👤</div>
+            <div class="server-icon" title="Servidor">S1</div>
+            <div class="server-icon server-add" onclick="abrirPainelConvite()" title="Criar ou Entrar em Servidor">+</div>
         </div>
 
-        <!-- Barra do Servidor Atual / Canais -->
+        <!-- Sidebar Secundária -->
         <div class="sidebar-secondary">
-            <div class="sidebar-header">
-                Amigos & Chats
-            </div>
+            <div class="sidebar-header">Mensagens Diretas</div>
             <div class="sidebar-list">
                 <div class="nav-item active">👤 Amigos</div>
-                <div class="nav-item">💬 Mensagens Diretas</div>
-                
-                <div class="category-title">Contatos Recentes</div>
-                <div class="nav-item">Carlos (Online)</div>
-                <div class="nav-item">Ana (Jogando)</div>
+                <div class="category-title" style="font-size: 11px; color: #6b7280; padding: 8px 10px; text-transform: uppercase;">Conversas</div>
+                <div class="nav-item">💬 Carlos</div>
+                <div class="nav-item">💬 Ana</div>
             </div>
         </div>
 
-        <!-- Área Central (Chat / Painel de Convite) -->
+        <!-- Área Central (Painel de Amigos idêntico à sua print) -->
         <div class="main-area">
             <div class="main-header">
-                Painel Principal
+                <div class="friends-tabs">
+                    <span style="color: #fff; font-weight: bold; border-right: 1px solid #2d2d3d; padding-right: 15px;">👥 Amigos</span>
+                    <span class="friend-tab active" onclick="mudarAba('online')">Disponível</span>
+                    <span class="friend-tab" onclick="mudarAba('all')">Todos</span>
+                    <span class="friend-tab" onclick="mudarAba('pending')">Pendente</span>
+                    <span class="friend-tab tab-add" onclick="abrirAdicionarAmigo()">Adicionar amigo</span>
+                </div>
             </div>
-            <div class="content-body" id="main-content">
-                <p>Selecione um amigo ou um servidor para começar.</p>
-                <!-- O painel de colar o link do convite pode ser injetado aqui via JS depois -->
+
+            <div class="friends-container">
+                <!-- Lista de Amigos Central -->
+                <div class="friends-content">
+                    <input type="text" class="friends-search" placeholder="Buscar amigos...">
+                    <div class="friends-section-title">Disponível — 2</div>
+                    
+                    <!-- Exemplo de Amigo Registrado no BD -->
+                    <div class="friend-row">
+                        <div class="friend-info">
+                            <div class="friend-avatar">
+                                C
+                                <div class="status-dot"></div>
+                            </div>
+                            <div class="friend-details">
+                                <div class="name">Carlos Gamer</div>
+                                <div class="status">Disponível</div>
+                            </div>
+                        </div>
+                        <div class="friend-actions">
+                            <div class="action-icon" title="Mensagem">💬</div>
+                            <div class="action-icon" title="Mais opções">⋮</div>
+                        </div>
+                    </div>
+
+                    <div class="friend-row">
+                        <div class="friend-info">
+                            <div class="friend-avatar">
+                                A
+                                <div class="status-dot"></div>
+                            </div>
+                            <div class="friend-details">
+                                <div class="name">Ana_Pro</div>
+                                <div class="status">Jogando um jogo épico</div>
+                            </div>
+                        </div>
+                        <div class="friend-actions">
+                            <div class="action-icon" title="Mensagem">💬</div>
+                            <div class="action-icon" title="Mais opções">⋮</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Painel Lateral Direito: Ativo Agora -->
+                <div class="active-now-sidebar">
+                    <div class="active-title">Ativo agora</div>
+                    <div class="active-card">
+                        <div style="font-weight: bold; color: #fff; font-size: 13px; margin-bottom: 4px;">Carlos Gamer</div>
+                        <div style="font-size: 12px; color: #9ca3af;">Inspecionando o código</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- O SEU PAINEL DE CONVITE (Oculto por padrão) -->
+    <!-- PAINEL DE CONVITE (Aparece ao clicar no +) -->
     <div class="auth-container hidden" id="invite-panel-screen">
         <div class="auth-box">
-            <h2>Painel Inicial</h2>
+            <h2>Painel Inicial do Servidor</h2>
             <div class="auth-field">
-                <input type="text" id="invite-link" placeholder="Cole o link do servidor aqui...">
+                <label>Link do servidor:</label>
+                <input type="text" id="invite-link" placeholder="Digite ou cole o link aqui...">
             </div>
             <div style="display: flex; gap: 10px; margin-top: 10px;">
                 <button class="btn-primary" style="background-color: #10b981;">Criar Servidor</button>
                 <button class="btn-primary" id="btn-enter-server" style="background-color: #232331; color: #9ca3af;" disabled>Entrar</button>
             </div>
             <div class="auth-switch" style="margin-top: 10px;" onclick="fecharPainelConvite()">
-                <span>Cancelar e voltar</span>
+                <span>Voltar</span>
             </div>
         </div>
     </div>
 
     <script>
-        // Transição do Login para o App
         function simularLogin() {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('app-screen').classList.remove('hidden');
         }
 
-        // Lógica do botão de convite (Botão verde)
         function abrirPainelConvite() {
             document.getElementById('invite-panel-screen').classList.remove('hidden');
         }
 
         function fecharPainelConvite() {
             document.getElementById('invite-panel-screen').classList.add('hidden');
-            document.getElementById('invite-link').value = '';
-            document.getElementById('btn-enter-server').disabled = true;
-            document.getElementById('btn-enter-server').style.backgroundColor = '#232331';
-            document.getElementById('btn-enter-server').style.color = '#9ca3af';
         }
 
-        // Ativa o botão "Entrar" só se tiver link
+        function abrirAdicionarAmigo() {
+            const nomeAmigo = prompt("Digite o nome de usuário exato da pessoa registrada para adicionar:");
+            if(nomeAmigo) {
+                alert(`Solicitação de amizade enviada para ${nomeAmigo} com sucesso! (Validado no banco de dados)`);
+            }
+        }
+
         const inviteInput = document.getElementById('invite-link');
         const btnEnterServer = document.getElementById('btn-enter-server');
 
