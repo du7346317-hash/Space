@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SpaceX</title>
+    <title>Plataforma - Amigos</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #121216; color: #d1d5db; display: flex; height: 100vh; overflow: hidden; }
 
-        /* Tela de Login Estilo Print (Sem QR Code, Centralizada e Bonita) */
+        /* Tela de Login */
         .auth-container { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
@@ -27,21 +27,16 @@
         .auth-field label { font-size: 12px; font-weight: bold; color: #b5bac1; text-transform: uppercase; }
         .auth-field input { background-color: #1e1f22; border: none; border-radius: 3px; padding: 10px; color: #dbdee1; outline: none; font-size: 16px; }
         
-        .forgot-pass { font-size: 13px; color: #00a8fc; cursor: pointer; margin-top: -10px; }
-        .forgot-pass:hover { text-decoration: underline; }
-
         .btn-primary { 
             background-color: #5865f2; color: #fff; border: none; padding: 12px; 
             border-radius: 3px; font-weight: 500; font-size: 16px; cursor: pointer; 
             transition: background-color 0.2s; width: 100%; 
         }
         .btn-primary:hover { background-color: #4752c4; }
-        
-        .auth-switch { font-size: 14px; color: #949ba4; }
+        .auth-switch { font-size: 14px; color: #949ba4; text-align: center; }
         .auth-switch span { color: #00a8fc; cursor: pointer; }
-        .auth-switch span:hover { text-decoration: underline; }
 
-        /* Layout Principal do Aplicativo */
+        /* Layout Principal */
         .app-layout { display: flex; width: 100%; height: 100vh; background-color: #121216; }
         
         .servers-sidebar { width: 76px; background-color: #1e1f22; display: flex; flex-direction: column; align-items: center; padding-top: 12px; gap: 10px; border-right: 1px solid #2b2d31; }
@@ -52,8 +47,12 @@
         .sidebar-secondary { width: 240px; background-color: #2b2d31; display: flex; flex-direction: column; }
         .sidebar-header { height: 48px; padding: 0 16px; display: flex; align-items: center; font-weight: bold; border-bottom: 2px solid #1f2023; color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
         .sidebar-list { padding: 12px 8px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; flex: 1; }
+        
         .nav-item { padding: 8px 10px; border-radius: 4px; cursor: pointer; color: #949ba4; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
         .nav-item:hover, .nav-item.active { background-color: #35373c; color: #fff; }
+        
+        /* Linha separadora logo abaixo de Amigos */
+        .sidebar-divider { border-bottom: 1px solid #3f4147; margin: 4px 8px 8px 8px; }
 
         .main-area { flex: 1; background-color: #313338; display: flex; flex-direction: column; }
         .main-header { height: 48px; padding: 0 20px; display: flex; align-items: center; border-bottom: 2px solid #1f2023; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
@@ -71,14 +70,17 @@
         
         .friend-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-top: 1px solid #3f4147; }
         .friend-info { display: flex; align-items: center; gap: 12px; }
-        .friend-avatar { width: 32px; height: 32px; background-color: #5865f2; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff; position: relative; }
+        .friend-avatar { width: 32px; height: 32px; background-color: #5865f2; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff; position: relative; font-size: 14px; }
         .status-dot { width: 10px; height: 10px; background-color: #23a55a; border-radius: 50%; position: absolute; bottom: -1px; right: -1px; border: 2px solid #313338; }
         .friend-details .name { font-weight: 600; color: #fff; font-size: 14px; }
         .friend-details .status { font-size: 12px; color: #949ba4; }
         
-        .friend-actions { display: flex; gap: 8px; }
-        .action-icon { width: 36px; height: 36px; background-color: #2b2d31; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #dbdee1; transition: 0.2s; }
+        .friend-actions { display: flex; gap: 8px; align-items: center; }
+        .action-icon { width: 36px; height: 36px; background-color: #2b2d31; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #dbdee1; transition: 0.2s; font-size: 16px; }
         .action-icon:hover { background-color: #1e1f22; color: #fff; }
+        
+        .btn-accept { background-color: #248046; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 600; }
+        .btn-accept:hover { background-color: #1a6335; }
 
         .active-now-sidebar { width: 320px; background-color: #2b2d31; border-left: 1px solid #1f2023; padding: 16px; overflow-y: auto; }
         .active-title { font-weight: 600; color: #fff; font-size: 16px; margin-bottom: 16px; }
@@ -88,31 +90,22 @@
 </head>
 <body>
 
-    <!-- TELA DE LOGIN SEM QR CODE -->
+    <!-- LOGIN -->
     <div class="auth-container" id="login-screen">
         <div class="auth-box">
             <div class="auth-header">
                 <h2>Boas-vindas de volta!</h2>
-                <p>Estamos muito animados em te ver novamente!</p>
+                <p>Digite seu nome de usuário (Ex: Novin, Dudu)</p>
             </div>
-            
             <div class="auth-field">
-                <label>E-mail ou nome de usuário</label>
-                <input type="text" id="email">
+                <label>Nome de usuário</label>
+                <input type="text" id="username-input" placeholder="Ex: Novin">
             </div>
-            
             <div class="auth-field">
                 <label>Senha</label>
-                <input type="password" id="password">
+                <input type="password" value="123456">
             </div>
-            
-            <div class="forgot-pass">Esqueceu sua senha?</div>
-            
-            <button class="btn-primary" onclick="simularLogin()">Entrar</button>
-            
-            <div class="auth-switch">
-                Precisa de uma conta? <span onclick="alert('Sistema anti-fake ativado no registro!')">Registre-se</span>
-            </div>
+            <button class="btn-primary" onclick="fazerLogin()">Entrar</button>
         </div>
     </div>
 
@@ -121,15 +114,20 @@
         <div class="servers-sidebar">
             <div class="server-icon active" title="Mensagens Diretas">👤</div>
             <div class="server-icon" title="Servidor">S1</div>
-            <div class="server-icon server-add" onclick="abrirPainelConvite()" title="Criar ou Entrar">+</div>
+            <div class="server-icon server-add" onclick="abrirPainelConvite()">+</div>
         </div>
 
         <div class="sidebar-secondary">
-            <div class="sidebar-header">Mensagens Diretas</div>
+            <div class="sidebar-header" id="logged-user-title">Mensagens Diretas</div>
             <div class="sidebar-list">
-                <div class="nav-item active">👤 Amigos</div>
-                <div style="font-size: 12px; font-weight: bold; color: #949ba4; padding: 12px 10px 4px 10px; text-transform: uppercase;">Conversas</div>
-                <div class="nav-item">💬 Carlos</div>
+                <div class="nav-item active" onclick="mudarAbaInterface('amigos')">
+                    <span id="sidebar-my-initial" style="width:24px; height:24px; background:#5865f2; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:12px; color:#fff;">N</span> Amigos
+                </div>
+                <div class="sidebar-divider"></div>
+                <div style="font-size: 12px; font-weight: bold; color: #949ba4; padding: 4px 10px; text-transform: uppercase;">Conversas</div>
+                <div id="direct-messages-list">
+                    <!-- Conversas vazias por padrão -->
+                </div>
             </div>
         </div>
 
@@ -137,45 +135,49 @@
             <div class="main-header">
                 <div class="friends-tabs">
                     <span style="color: #fff; font-weight: bold; border-right: 1px solid #3f4147; padding-right: 16px;">👥 Amigos</span>
-                    <span class="friend-tab active">Disponível</span>
-                    <span class="friend-tab">Todos</span>
-                    <span class="friend-tab">Pendente</span>
-                    <span class="friend-tab tab-add" onclick="abrirAdicionarAmigo()">Adicionar amigo</span>
+                    <span class="friend-tab active" id="tab-online" onclick="alternarAbaAmigos('online')">Disponível</span>
+                    <span class="friend-tab" id="tab-all" onclick="alternarAbaAmigos('all')">Todos</span>
+                    <span class="friend-tab" id="tab-pending" onclick="alternarAbaAmigos('pending')">Pendente <span id="pending-badge" style="background: #ed4245; color: #fff; border-radius: 50%; padding: 1px 6px; font-size: 10px; display:none;">0</span></span>
+                    <span class="friend-tab tab-add" onclick="abrirPainelAdicionarAmigo()">Adicionar amigo</span>
                 </div>
             </div>
 
             <div class="friends-container">
-                <div class="friends-content">
+                <div class="friends-content" id="friends-main-view">
                     <input type="text" class="friends-search" placeholder="Buscar amigos">
-                    <div style="font-size: 12px; font-weight: bold; color: #949ba4; text-transform: uppercase; margin-top: 10px;">Disponível — 1</div>
-                    
-                    <div class="friend-row">
-                        <div class="friend-info">
-                            <div class="friend-avatar">
-                                C
-                                <div class="status-dot"></div>
-                            </div>
-                            <div class="friend-details">
-                                <div class="name">Carlos Gamer</div>
-                                <div class="status">Disponível</div>
-                            </div>
-                        </div>
-                        <div class="friend-actions">
-                            <div class="action-icon">💬</div>
-                            <div class="action-icon">⋮</div>
-                        </div>
+                    <div id="friends-list-container">
+                        <!-- Lista vazia por padrão -->
                     </div>
                 </div>
 
                 <div class="active-now-sidebar">
                     <div class="active-title">Ativo agora</div>
-                    <div style="color: #949ba4; font-size: 13px;">Nós avisaremos quando seus amigos estiverem com uma atividade nova por aqui!</div>
+                    <div id="active-now-list" style="color: #949ba4; font-size: 13px;">
+                        Nenhum amigo ativo no momento.
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- PAINEL DE CONVITE -->
+    <!-- PAINEL DE ADICIONAR AMIGO -->
+    <div class="auth-container hidden" id="add-friend-modal" style="background: rgba(0,0,0,0.7);">
+        <div class="auth-box">
+            <div class="auth-header">
+                <h2>ADICIONAR AMIGO</h2>
+                <p>Você pode adicionar amigos pelo nome de usuário exato.</p>
+            </div>
+            <div class="auth-field">
+                <input type="text" id="target-friend-input" placeholder="Insira o nome de usuário (Ex: Dudu)">
+            </div>
+            <button class="btn-primary" onclick="enviarPedidoAmizade()">Enviar Solicitação de Amizade</button>
+            <div class="auth-switch" style="cursor: pointer;" onclick="fecharPainelAdicionarAmigo()">
+                <span>Cancelar</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAINEL DE CONVITE DE SERVIDOR -->
     <div class="auth-container hidden" id="invite-panel-screen" style="background: rgba(0,0,0,0.7);">
         <div class="auth-box">
             <div class="auth-header">
@@ -183,40 +185,184 @@
                 <p>Link do servidor:</p>
             </div>
             <div class="auth-field">
-                <input type="text" id="invite-link" placeholder="Digite ou cole o link aqui...">
+                <input type="text" id="invite-link" placeholder="Cole o link aqui...">
             </div>
             <div style="display: flex; gap: 10px;">
-                <button class="btn-primary" style="background-color: #248046;">Criar Servidor</button>
+                <button class="btn-primary" style="background-color: #248046;">Criar</button>
                 <button class="btn-primary" id="btn-enter-server" style="background-color: #2b2d31; color: #80848e; cursor: not-allowed;" disabled>Entrar</button>
             </div>
-            <div class="auth-switch" style="text-align: center; margin-top: 5px;" onclick="fecharPainelConvite()">
+            <div class="auth-switch" style="cursor: pointer; margin-top: 5px;" onclick="fecharPainelConvite()">
                 <span>Cancelar</span>
             </div>
         </div>
     </div>
 
     <script>
-        function simularLogin() {
+        // Lista vazia de registros. Conforme o pessoal logar, vao se registrando.
+        const usuariosRegistrados = ["Novin", "Dudu", "Ana"];
+        
+        let usuarioAtual = "";
+        let abaAtivaAmigos = "online";
+        
+        // Estrutura limpa: ninguém começa com amigos cadastrados
+        let dadosPlataforma = {
+            "Novin": { amigos: [], pendentesRecebidos: [] },
+            "Dudu": { amigos: [], pendentesRecebidos: [] },
+            "Ana": { amigos: [], pendentesRecebidos: [] }
+        };
+
+        function fazerLogin() {
+            const inputVal = document.getElementById('username-input').value.trim();
+            if (!inputVal) {
+                alert("Digite um nome de usuário!");
+                return;
+            }
+            
+            usuarioAtual = inputVal;
+            if (!usuariosRegistrados.includes(usuarioAtual)) {
+                usuariosRegistrados.push(usuarioAtual);
+                dadosPlataforma[usuarioAtual] = { amigos: [], pendentesRecebidos: [] };
+            }
+
+            document.getElementById('sidebar-my-initial').innerText = usuarioAtual.charAt(0).toUpperCase();
+            
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('app-screen').classList.remove('hidden');
+            atualizarInterfaceAmigos();
         }
 
-        function abrirPainelConvite() {
-            document.getElementById('invite-panel-screen').classList.remove('hidden');
+        function abrirPainelAdicionarAmigo() {
+            document.getElementById('add-friend-modal').classList.remove('hidden');
         }
 
-        function fecharPainelConvite() {
-            document.getElementById('invite-panel-screen').classList.add('hidden');
+        function fecharPainelAdicionarAmigo() {
+            document.getElementById('add-friend-modal').classList.add('hidden');
+            document.getElementById('target-friend-input').value = '';
         }
 
-        function abrirAdicionarAmigo() {
-            const nomeAmigo = prompt("Digite o nome da pessoa registrada:");
-            if(nomeAmigo) alert(`Solicitação enviada para ${nomeAmigo}!`);
+        function enviarPedidoAmizade() {
+            const alvo = document.getElementById('target-friend-input').value.trim();
+            
+            if (alvo === usuarioAtual) {
+                alert("Você não pode adicionar a si mesmo!");
+                return;
+            }
+            
+            if (!usuariosRegistrados.includes(alvo)) {
+                alert("Este usuário não está registrado na plataforma!");
+                return;
+            }
+
+            if (dadosPlataforma[usuarioAtual].amigos.includes(alvo)) {
+                alert("Vocês já são amigos!");
+                return;
+            }
+
+            if (!dadosPlataforma[alvo].pendentesRecebidos.includes(usuarioAtual)) {
+                dadosPlataforma[alvo].pendentesRecebidos.push(usuarioAtual);
+                alert(`Solicitação de amizade enviada com sucesso para ${alvo}!`);
+            } else {
+                alert("Você já enviou uma solicitação para este usuário.");
+            }
+
+            fecharPainelAdicionarAmigo();
         }
+
+        function aceitarPedido(amigoNome) {
+            const meuObj = dadosPlataforma[usuarioAtual];
+            meuObj.pendentesRecebidos = meuObj.pendentesRecebidos.filter(u => u !== amigoNome);
+            
+            if (!meuObj.amigos.includes(amigoNome)) meuObj.amigos.push(amigoNome);
+            if (!dadosPlataforma[amigoNome].amigos.includes(usuarioAtual)) dadosPlataforma[amigoNome].amigos.push(usuarioAtual);
+
+            alert(`Agora você e ${amigoNome} são amigos!`);
+            atualizarInterfaceAmigos();
+        }
+
+        function alternarAbaAmigos(aba) {
+            abaAtivaAmigos = aba;
+            document.querySelectorAll('.friend-tab').forEach(t => t.classList.remove('active'));
+            if(aba === 'online') document.getElementById('tab-online').classList.add('active');
+            if(aba === 'all') document.getElementById('tab-all').classList.add('active');
+            if(aba === 'pending') document.getElementById('tab-pending').classList.add('active');
+            
+            atualizarInterfaceAmigos();
+        }
+
+        function atualizarInterfaceAmigos() {
+            const container = document.getElementById('friends-list-container');
+            const pendingBadge = document.getElementById('pending-badge');
+            const meuDados = dadosPlataforma[usuarioAtual];
+            
+            const totalPendentes = meuDados.pendentesRecebidos.length;
+            if (totalPendentes > 0) {
+                pendingBadge.innerText = totalPendentes;
+                pendingBadge.style.display = 'inline-block';
+            } else {
+                pendingBadge.style.display = 'none';
+            }
+
+            container.innerHTML = '';
+
+            if (abaAtivaAmigos === 'online' || abaAtivaAmigos === 'all') {
+                const amigos = meuDados.amigos;
+                container.innerHTML += `<div style="font-size: 12px; font-weight: bold; color: #949ba4; text-transform: uppercase; margin-top: 10px;">${abaAtivaAmigos === 'online' ? 'Disponível' : 'Todos'} — ${amigos.length}</div>`;
+                
+                if(amigos.length === 0) {
+                    container.innerHTML += `<div style="color: #949ba4; font-size: 14px; margin-top: 10px;">Nenhum amigo por aqui ainda. Use o botão "Adicionar amigo" acima!</div>`;
+                }
+
+                amigos.forEach(amigo => {
+                    const inicial = amigo.charAt(0).toUpperCase();
+                    container.innerHTML += `
+                        <div class="friend-row">
+                            <div class="friend-info">
+                                <div class="friend-avatar">${inicial}<div class="status-dot"></div></div>
+                                <div class="friend-details">
+                                    <div class="name">${amigo}</div>
+                                    <div class="status">Disponível</div>
+                                </div>
+                            </div>
+                            <div class="friend-actions">
+                                <div class="action-icon" title="Abrir chat">💬</div>
+                                <div class="action-icon" title="Opções">⋮</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else if (abaAtivaAmigos === 'pending') {
+                const pendentes = meuDados.pendentesRecebidos;
+                container.innerHTML += `<div style="font-size: 12px; font-weight: bold; color: #949ba4; text-transform: uppercase; margin-top: 10px;">Solicitações Pendentes — ${pendentes.length}</div>`;
+                
+                if(pendentes.length === 0) {
+                    container.innerHTML += `<div style="color: #949ba4; font-size: 14px; margin-top: 10px;">Não há solicitações pendentes.</div>`;
+                }
+
+                pendentes.forEach(remetente => {
+                    const inicial = remetente.charAt(0).toUpperCase();
+                    container.innerHTML += `
+                        <div class="friend-row">
+                            <div class="friend-info">
+                                <div class="friend-avatar">${inicial}</div>
+                                <div class="friend-details">
+                                    <div class="name">${remetente}</div>
+                                    <div class="status">Solicitação de amizade recebida</div>
+                                </div>
+                            </div>
+                            <div class="friend-actions">
+                                <button class="btn-accept" onclick="aceitarPedido('${remetente}')">Aceitar</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        function abrirPainelConvite() { document.getElementById('invite-panel-screen').classList.remove('hidden'); }
+        function fecharPainelConvite() { document.getElementById('invite-panel-screen').classList.add('hidden'); }
 
         const inviteInput = document.getElementById('invite-link');
         const btnEnterServer = document.getElementById('btn-enter-server');
-
         inviteInput.addEventListener('input', () => {
             if (inviteInput.value.trim() !== '') {
                 btnEnterServer.disabled = false;
