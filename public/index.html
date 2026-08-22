@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Space</title>
+    <title>Plataforma - Autenticação</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #121216; color: #d1d5db; display: flex; height: 100vh; overflow: hidden; }
 
-        /* Tela de Login */
+        /* Tela de Autenticação (Login / Registro) */
         .auth-container { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
@@ -51,7 +51,6 @@
         .nav-item { padding: 8px 10px; border-radius: 4px; cursor: pointer; color: #949ba4; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
         .nav-item:hover, .nav-item.active { background-color: #35373c; color: #fff; }
         
-        /* Linha separadora logo abaixo de Amigos */
         .sidebar-divider { border-bottom: 1px solid #3f4147; margin: 4px 8px 8px 8px; }
 
         .main-area { flex: 1; background-color: #313338; display: flex; flex-direction: column; }
@@ -90,22 +89,62 @@
 </head>
 <body>
 
-    <!-- LOGIN -->
+    <!-- TELA DE LOGIN -->
     <div class="auth-container" id="login-screen">
         <div class="auth-box">
             <div class="auth-header">
                 <h2>Boas-vindas de volta!</h2>
-                <p>Digite seu nome de usuário (Ex: Novin, Dudu)</p>
+                <p>Estamos muito animados em te ver novamente!</p>
             </div>
             <div class="auth-field">
-                <label>Nome de usuário</label>
-                <input type="text" id="username-input" placeholder="Ex: Novin">
+                <label>E-mail ou nome de usuário</label>
+                <input type="text" id="login-input" placeholder="Ex: Novin">
             </div>
             <div class="auth-field">
                 <label>Senha</label>
-                <input type="password" value="123456">
+                <input type="password" id="login-pass" placeholder="••••••••">
             </div>
             <button class="btn-primary" onclick="fazerLogin()">Entrar</button>
+            <div class="auth-switch">
+                Precisando de uma conta? <span onclick="mudarParaRegistro()">Registre-se</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- TELA DE REGISTRO (Com simulação de envio de e-mail de ativação) -->
+    <div class="auth-container hidden" id="register-screen">
+        <div class="auth-box">
+            <div class="auth-header">Criar uma conta</div>
+            <div class="auth-field">
+                <label>E-mail</label>
+                <input type="email" id="reg-email" placeholder="seuemail@dominio.com">
+            </div>
+            <div class="auth-field">
+                <label>Nome de usuário</label>
+                <input type="text" id="reg-username" placeholder="Ex: Novin">
+            </div>
+            <div class="auth-field">
+                <label>Senha</label>
+                <input type="password" id="reg-pass" placeholder="••••••••">
+            </div>
+            <button class="btn-primary" onclick="solicitarRegistroEmail()">Continuar</button>
+            <div class="auth-switch">
+                <span onclick="mudarParaLogin()">Já tem uma conta?</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- TELA DE AVISO DE VERIFICAÇÃO DE E-MAIL -->
+    <div class="auth-container hidden" id="verify-email-screen">
+        <div class="auth-box" style="text-align: center;">
+            <div class="auth-header">
+                <h2>Verifique seu E-mail</h2>
+                <p id="verify-msg-text">Enviamos um link de confirmação para o seu e-mail. Clique no botão abaixo para simular que você abriu a caixa de entrada e ativou a conta!</p>
+            </div>
+            <button class="btn-primary" style="background-color: #248046;" onclick="ativarContaPorEmail()">Confirmar e Ativar Conta</button>
+            <div class="auth-switch" style="margin-top: 10px;">
+                <span onclick="mudarParaLogin()">Voltar ao Login</span>
+            </div>
         </div>
     </div>
 
@@ -120,14 +159,12 @@
         <div class="sidebar-secondary">
             <div class="sidebar-header" id="logged-user-title">Mensagens Diretas</div>
             <div class="sidebar-list">
-                <div class="nav-item active" onclick="mudarAbaInterface('amigos')">
+                <div class="nav-item active">
                     <span id="sidebar-my-initial" style="width:24px; height:24px; background:#5865f2; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:12px; color:#fff;">N</span> Amigos
                 </div>
                 <div class="sidebar-divider"></div>
                 <div style="font-size: 12px; font-weight: bold; color: #949ba4; padding: 4px 10px; text-transform: uppercase;">Conversas</div>
-                <div id="direct-messages-list">
-                    <!-- Conversas vazias por padrão -->
-                </div>
+                <div id="direct-messages-list"></div>
             </div>
         </div>
 
@@ -145,16 +182,12 @@
             <div class="friends-container">
                 <div class="friends-content" id="friends-main-view">
                     <input type="text" class="friends-search" placeholder="Buscar amigos">
-                    <div id="friends-list-container">
-                        <!-- Lista vazia por padrão -->
-                    </div>
+                    <div id="friends-list-container"></div>
                 </div>
 
                 <div class="active-now-sidebar">
                     <div class="active-title">Ativo agora</div>
-                    <div id="active-now-list" style="color: #949ba4; font-size: 13px;">
-                        Nenhum amigo ativo no momento.
-                    </div>
+                    <div id="active-now-list" style="color: #949ba4; font-size: 13px;">Nenhum amigo ativo no momento.</div>
                 </div>
             </div>
         </div>
@@ -165,19 +198,19 @@
         <div class="auth-box">
             <div class="auth-header">
                 <h2>ADICIONAR AMIGO</h2>
-                <p>Você pode adicionar amigos pelo nome de usuário exato.</p>
+                <p>Insira o nome de usuário exato.</p>
             </div>
             <div class="auth-field">
-                <input type="text" id="target-friend-input" placeholder="Insira o nome de usuário (Ex: Dudu)">
+                <input type="text" id="target-friend-input" placeholder="Ex: Dudu">
             </div>
-            <button class="btn-primary" onclick="enviarPedidoAmizade()">Enviar Solicitação de Amizade</button>
+            <button class="btn-primary" onclick="enviarPedidoAmizade()">Enviar Solicitação</button>
             <div class="auth-switch" style="cursor: pointer;" onclick="fecharPainelAdicionarAmigo()">
                 <span>Cancelar</span>
             </div>
         </div>
     </div>
 
-    <!-- PAINEL DE CONVITE DE SERVIDOR -->
+    <!-- PAINEL DE CONVITE -->
     <div class="auth-container hidden" id="invite-panel-screen" style="background: rgba(0,0,0,0.7);">
         <div class="auth-box">
             <div class="auth-header">
@@ -198,32 +231,78 @@
     </div>
 
     <script>
-        // Lista vazia de registros. Conforme o pessoal logar, vao se registrando.
-        const usuariosRegistrados = ["Novin", "Dudu", "Ana"];
+        // Bancos de controle de contas
+        let usuariosRegistrados = []; // Contas ativadas por e-mail
+        let contasPendentesAtivacao = {}; // Guarda dados temporários até clicar no link do e-mail
         
         let usuarioAtual = "";
         let abaAtivaAmigos = "online";
-        
-        // Estrutura limpa: ninguém começa com amigos cadastrados
-        let dadosPlataforma = {
-            "Novin": { amigos: [], pendentesRecebidos: [] },
-            "Dudu": { amigos: [], pendentesRecebidos: [] },
-            "Ana": { amigos: [], pendentesRecebidos: [] }
-        };
+        let dadosPlataforma = {};
+
+        function mudarParaRegistro() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('register-screen').classList.remove('hidden');
+        }
+
+        function mudarParaLogin() {
+            document.getElementById('register-screen').classList.add('hidden');
+            document.getElementById('verify-email-screen').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+        }
+
+        function solicitarRegistroEmail() {
+            const email = document.getElementById('reg-email').value.trim();
+            const username = document.getElementById('reg-username').value.trim();
+            
+            if (!email || !username) {
+                alert("Preencha todos os campos!");
+                return;
+            }
+
+            if (usuariosRegistrados.includes(username)) {
+                alert("Este nome de usuário já está em uso!");
+                return;
+            }
+
+            // Salva pendente de ativação
+            contasPendentesAtivacao[email] = username;
+            
+            document.getElementById('verify-msg-text').innerText = `Enviamos um link de confirmação para ${email}. Clique abaixo para simular que você abriu seu e-mail e ativou a conta!`;
+            
+            document.getElementById('register-screen').classList.add('hidden');
+            document.getElementById('verify-email-screen').classList.remove('hidden');
+        }
+
+        function ativarContaPorEmail() {
+            // Pega o último email pendente e ativa a conta oficialmente
+            const emails = Object.keys(contasPendentesAtivacao);
+            if (emails.length > 0) {
+                const ultimoEmail = emails[emails.length - 1];
+                const username = contasPendentesAtivacao[ultimoEmail];
+
+                if (!usuariosRegistrados.includes(username)) {
+                    usuariosRegistrados.push(username);
+                    dadosPlataforma[username] = { amigos: [], pendentesRecebidos: [] };
+                }
+
+                alert("E-mail confirmado com sucesso! Conta criada e ativada.");
+                mudarParaLogin();
+            }
+        }
 
         function fazerLogin() {
-            const inputVal = document.getElementById('username-input').value.trim();
+            const inputVal = document.getElementById('login-input').value.trim();
             if (!inputVal) {
-                alert("Digite um nome de usuário!");
+                alert("Digite seu nome de usuário ou e-mail!");
+                return;
+            }
+
+            if (!usuariosRegistrados.includes(inputVal)) {
+                alert("Conta não encontrada ou e-mail ainda não foi ativado por confirmação!");
                 return;
             }
             
             usuarioAtual = inputVal;
-            if (!usuariosRegistrados.includes(usuarioAtual)) {
-                usuariosRegistrados.push(usuarioAtual);
-                dadosPlataforma[usuarioAtual] = { amigos: [], pendentesRecebidos: [] };
-            }
-
             document.getElementById('sidebar-my-initial').innerText = usuarioAtual.charAt(0).toUpperCase();
             
             document.getElementById('login-screen').classList.add('hidden');
@@ -231,40 +310,21 @@
             atualizarInterfaceAmigos();
         }
 
-        function abrirPainelAdicionarAmigo() {
-            document.getElementById('add-friend-modal').classList.remove('hidden');
-        }
-
-        function fecharPainelAdicionarAmigo() {
-            document.getElementById('add-friend-modal').classList.add('hidden');
-            document.getElementById('target-friend-input').value = '';
-        }
+        function abrirPainelAdicionarAmigo() { document.getElementById('add-friend-modal').classList.remove('hidden'); }
+        function fecharPainelAdicionarAmigo() { document.getElementById('add-friend-modal').classList.add('hidden'); document.getElementById('target-friend-input').value = ''; }
 
         function enviarPedidoAmizade() {
             const alvo = document.getElementById('target-friend-input').value.trim();
-            
-            if (alvo === usuarioAtual) {
-                alert("Você não pode adicionar a si mesmo!");
-                return;
-            }
-            
-            if (!usuariosRegistrados.includes(alvo)) {
-                alert("Este usuário não está registrado na plataforma!");
-                return;
-            }
-
-            if (dadosPlataforma[usuarioAtual].amigos.includes(alvo)) {
-                alert("Vocês já são amigos!");
-                return;
-            }
+            if (alvo === usuarioAtual) { alert("Você não pode adicionar a si mesmo!"); return; }
+            if (!usuariosRegistrados.includes(alvo)) { alert("Este usuário não está registrado ou não ativou a conta!"); return; }
+            if (dadosPlataforma[usuarioAtual].amigos.includes(alvo)) { alert("Vocês já são amigos!"); return; }
 
             if (!dadosPlataforma[alvo].pendentesRecebidos.includes(usuarioAtual)) {
                 dadosPlataforma[alvo].pendentesRecebidos.push(usuarioAtual);
-                alert(`Solicitação de amizade enviada com sucesso para ${alvo}!`);
+                alert(`Solicitação enviada para ${alvo}!`);
             } else {
                 alert("Você já enviou uma solicitação para este usuário.");
             }
-
             fecharPainelAdicionarAmigo();
         }
 
@@ -285,7 +345,6 @@
             if(aba === 'online') document.getElementById('tab-online').classList.add('active');
             if(aba === 'all') document.getElementById('tab-all').classList.add('active');
             if(aba === 'pending') document.getElementById('tab-pending').classList.add('active');
-            
             atualizarInterfaceAmigos();
         }
 
@@ -309,7 +368,7 @@
                 container.innerHTML += `<div style="font-size: 12px; font-weight: bold; color: #949ba4; text-transform: uppercase; margin-top: 10px;">${abaAtivaAmigos === 'online' ? 'Disponível' : 'Todos'} — ${amigos.length}</div>`;
                 
                 if(amigos.length === 0) {
-                    container.innerHTML += `<div style="color: #949ba4; font-size: 14px; margin-top: 10px;">Nenhum amigo por aqui ainda. Use o botão "Adicionar amigo" acima!</div>`;
+                    container.innerHTML += `<div style="color: #949ba4; font-size: 14px; margin-top: 10px;">Nenhum amigo por aqui ainda.</div>`;
                 }
 
                 amigos.forEach(amigo => {
@@ -319,7 +378,7 @@
                             <div class="friend-info">
                                 <div class="friend-avatar">${inicial}<div class="status-dot"></div></div>
                                 <div class="friend-details">
-                                    <div class="name">${amigo}</div>
+                    <div class="name">${amigo}</div>
                                     <div class="status">Disponível</div>
                                 </div>
                             </div>
