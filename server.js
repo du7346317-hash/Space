@@ -1,164 +1,170 @@
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
-const path = require('path');
-
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
-
-app.use(express.json());
-// Configura o Express para servir os arquivos da pasta 'public'
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Rota padrão explícita para garantir o carregamento do index.html
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// Banco de dados simulado em memória
-let users = [];
-let servers = [];
-let messages = {}; // Mapeia channelId ou conversationId para um array de mensagens
-
-// Rotas de Autenticação e Usuários
-app.post('/api/users/register', (req, res) => {
-    const { username, email, password } = req.body;
-    if (!username || !email || !password) {
-        return res.status(400).json({ error: 'Preencha todos os campos!' });
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Minha Plataforma</title>
+  <style>
+    :root {
+      /* Identidade visual própria: Tema Cyber Dark / Teal */
+      --bg-primary: #0F172A;
+      --bg-secondary: #1E293B;
+      --accent: #10B981; /* Esmeralda */
+      --accent-hover: #059669;
+      --text-main: #F8FAFC;
+      --speaking-glow: #22C55E; /* Borda verde ao falar */
     }
+
+    body {
+      margin: 0;
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Modal / Painel Inicial */
+    .join-panel {
+      width: 400px;
+      margin: 100px auto;
+      padding: 24px;
+      background-color: var(--bg-secondary);
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0 16px 0;
+      box-sizing: border-box;
+      background-color: var(--bg-primary);
+      border: 1px solid #334155;
+      color: white;
+      border-radius: 6px;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn-primary { background-color: var(--accent); color: white; }
+    .btn-primary:hover { background-color: var(--accent-hover); }
+
+    /* Estilo do Avatar e Borda de Fala */
+    .avatar-container {
+      position: relative;
+      width: 48px;
+      height: 48px;
+    }
+
+    .user-avatar {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid transparent;
+      transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+
+    /* Classe ativada dinamicamente via JS quando o microfone detecta áudio */
+    .user-avatar.speaking {
+      border-color: var(--speaking-glow);
+      box-shadow: 0 0 12px var(--speaking-glow);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Painel Inicial -->
+  <div class="join-panel">
+    <label for="invite-link">Link do servidor:</label>
+    <input type="text" id="invite-link" class="input-field" placeholder="Digite ou cole o link aqui...">
     
-    if (users.find(u => u.email === email)) {
-        return res.status(400).json({ error: 'E-mail já cadastrado!' });
-    }
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="openCreateModal()">Criar Servidor</button>
+      <button class="btn btn-primary" id="btn-enter" onclick="joinServer()" disabled>Entrar</button>
+    </div>
+  </div>
 
-    const newUser = {
-        id: 'user_' + Date.now(),
-        username,
-        email,
-        password,
-        avatar: null,
-        friends: []
-    };
+  <!-- Exemplo do Avatar de Usuário em Call -->
+  <div style="margin: 20px; display: flex; align-items: center; gap: 12px;">
+    <div class="avatar-container">
+      <img src="https://via.placeholder.com/48" id="my-avatar" class="user-avatar" alt="Avatar">
+    </div>
+    <span id="user-name">Usuário</span>
+  </div>
 
-    users.push(newUser);
-    res.json({ message: 'Conta criada com sucesso!' });
-});
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
 
-app.post('/api/users/login', (req, res) => {
-    const { email, password } = req.body;
-    const user = users.find(u => u.email === email && u.password === password);
-    
-    if (!user) {
-        return res.status(400).json({ error: 'E-mail ou senha incorretos!' });
-    }
+    // Habilitar o botão 'Entrar' apenas quando houver texto no input
+    const inviteInput = document.getElementById('invite-link');
+    const btnEnter = document.getElementById('btn-enter');
 
-    const { password: _, ...safeUser } = user;
-    res.json({ user: safeUser });
-});
-
-app.put('/api/users/profile', (req, res) => {
-    const { userId, username, avatar } = req.body;
-    const user = users.find(u => u.id === userId);
-
-    if (!user) return res.status(404).json({ error: 'Usuário não encontrado!' });
-
-    user.username = username || user.username;
-    user.avatar = avatar !== undefined ? avatar : user.avatar;
-
-    const { password: _, ...safeUser } = user;
-    res.json({ message: 'Perfil atualizado com sucesso!', user: safeUser });
-});
-
-// Rotas de Amigos
-app.post('/api/friends/add', (req, res) => {
-    const { userId, friendUsername } = req.body;
-    const user = users.find(u => u.id === userId);
-    const friend = users.find(u => u.username === friendUsername);
-
-    if (!friend) {
-        return res.status(404).json({ error: 'Usuário não encontrado!' });
-    }
-
-    if (user.id === friend.id) {
-        return res.status(400).json({ error: 'Você não pode adicionar a si mesmo!' });
-    }
-
-    if (user.friends.some(f => f.id === friend.id)) {
-        return res.status(400).json({ error: 'Vocês já são amigos!' });
-    }
-
-    user.friends.push({ id: friend.id, username: friend.username, avatar: friend.avatar });
-    friend.friends.push({ id: user.id, username: user.username, avatar: user.avatar });
-
-    res.json({ message: `Amigo ${friend.username} adicionado com sucesso!` });
-});
-
-// Rotas de Servidores
-app.post('/api/servers/create', (req, res) => {
-    const { name, ownerId } = req.body;
-    if (!name) return res.status(400).json({ error: 'Nome do servidor obrigatório!' });
-
-    const newServer = {
-        id: 'srv_' + Date.now(),
-        name,
-        ownerId,
-        channels: [
-            { id: 'chan_general_' + Date.now(), name: 'geral', type: 'text' }
-        ],
-        members: [ownerId]
-    };
-
-    servers.push(newServer);
-    res.json({ message: 'Servidor criado com sucesso!', server: newServer });
-});
-
-app.get('/api/servers/:userId', (req, res) => {
-    const userServers = servers.filter(s => s.members.includes(req.params.userId));
-    res.json(userServers);
-});
-
-// WebSocket (Socket.io) para Mensagens em Tempo Real
-io.on('connection', (socket) => {
-    console.log('Um usuário se conectou:', socket.id);
-
-    socket.on('register-user', (userId) => {
-        socket.join(userId);
+    inviteInput.addEventListener('input', () => {
+      btnEnter.disabled = inviteInput.value.trim() === '';
     });
 
-    socket.on('join-text', (channelId) => {
-        socket.join(channelId);
+    function joinServer() {
+      const inviteCode = inviteInput.value.trim();
+      alert('Buscando servidor para o convite: ' + inviteCode);
+      // Fazer requisição GET /api/invites/:code para exibir preview (nome + foto) antes de aceitar
+    }
+
+    function openCreateModal() {
+      alert('Abrir modal de criação de servidor');
+    }
+
+    // Detecção de Áudio Local (Harness Voice Activity Detection)
+    async function initAudioDetection() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const audioContext = new AudioContext();
+        const analyzer = audioContext.createAnalyser();
+        const source = audioContext.createMediaStreamSource(stream);
         
-        if (!messages[channelId]) messages[channelId] = [];
-        socket.emit('load-history', messages[channelId]);
-    });
+        analyzer.fftSize = 512;
+        source.connect(analyzer);
 
-    socket.on('send-message', (data) => {
-        const { channelId, text, user } = data;
-        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        
-        const messageData = { user, text, time, channelId };
+        const dataArray = new Uint8Array(analyzer.frequencyBinCount);
+        const avatar = document.getElementById('my-avatar');
 
-        if (!messages[channelId]) messages[channelId] = [];
-        messages[channelId].push(messageData);
+        function checkVolume() {
+          analyzer.getByteFrequencyData(dataArray);
+          let sum = 0;
+          for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+          let average = sum / dataArray.length;
 
-        io.to(channelId).emit('receive-message', messageData);
+          // Limiar de fala (sensibilidade do microfone)
+          if (average > 15) {
+            avatar.classList.add('speaking');
+            socket.emit('speaking-status', { isSpeaking: true });
+          } else {
+            avatar.classList.remove('speaking');
+            socket.emit('speaking-status', { isSpeaking: false });
+          }
 
-        if (channelId.includes('-DM-')) {
-            const participants = channelId.split('-DM-');
-            const recipientId = participants.find(id => id !== user.id);
-            if (recipientId) {
-                io.to(recipientId).emit('notify-unread', { channelId });
-            }
+          requestAnimationFrame(checkVolume);
         }
-    });
 
-    socket.on('disconnect', () => {
-        console.log('Usuário desconectado');
-    });
-});
+        checkVolume();
+      } catch (err) {
+        console.error('Erro ao acessar microfone:', err);
+      }
+    }
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`Servidor rodando na porta ${PORT}!`);
-});
+    // Inicializar verificação de áudio ao conectar
+    // initAudioDetection();
+  </script>
+</body>
+</html>
