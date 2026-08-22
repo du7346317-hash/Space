@@ -3,65 +3,103 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Plataforma Neon</title>
+  <title>Space</title>
   <style>
     body {
-      background-color: #0F172A;
-      color: #F8FAFC;
-      font-family: Arial, sans-serif;
+      background-color: #0B1320; /* Cor de fundo escura parecida com a print */
+      color: #FFFFFF;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
       margin: 0;
     }
-    .join-panel {
-      background-color: #1E293B;
-      padding: 24px;
+    .panel {
+      background-color: #1E293B; /* Cor do card */
+      padding: 30px;
       border-radius: 12px;
+      width: 350px;
       text-align: center;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
     }
-    .input-field {
-      width: 90%;
+    .panel h2 {
+      margin-top: 0;
+      margin-bottom: 20px;
+      font-size: 22px;
+    }
+    .input-box {
+      width: 100%;
       padding: 12px;
-      margin: 10px 0;
-      background: #0F172A;
+      margin-bottom: 20px;
+      background-color: #0F172A;
       border: 1px solid #334155;
-      color: white;
+      color: #FFF;
       border-radius: 6px;
+      box-sizing: border-box;
+      outline: none;
+    }
+    .input-box:focus {
+      border-color: #10B981;
+    }
+    .btn-group {
+      display: flex;
+      gap: 10px;
     }
     .btn {
-      padding: 10px 20px;
-      margin: 5px;
+      flex: 1;
+      padding: 12px;
       border: none;
       border-radius: 6px;
-      background-color: #10B981;
-      color: white;
       font-weight: bold;
       cursor: pointer;
+      transition: background-color 0.2s;
     }
-    .btn:disabled { background-color: #555; cursor: not-allowed; }
+    .btn-create {
+      background-color: #10B981;
+      color: white;
+    }
+    .btn-create:hover {
+      background-color: #059669;
+    }
+    .btn-enter {
+      background-color: #475569;
+      color: white;
+    }
+    .btn-enter:disabled {
+      background-color: #334155;
+      color: #94A3B8;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
-  <div class="join-panel">
-    <h3>Painel Inicial</h3>
-    <input type="text" id="invite-link" class="input-field" placeholder="Cole o link do servidor aqui...">
-    <div>
-      <button class="btn">Criar Servidor</button>
-      <button class="btn" id="btn-enter" disabled>Entrar</button>
+
+  <div class="panel">
+    <h2>Painel Inicial</h2>
+    <input type="text" id="invite-link" class="input-box" placeholder="Cole o link do servidor aqui...">
+    
+    <div class="btn-group">
+      <button class="btn btn-create">Criar Servidor</button>
+      <button class="btn btn-enter" id="btn-enter" disabled>Entrar</button>
     </div>
   </div>
 
-  <!-- Puxando o client do WebSocket direto do provedor -->
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
-    const input = document.getElementById('invite-link');
+    const inviteInput = document.getElementById('invite-link');
     const btnEnter = document.getElementById('btn-enter');
 
-    input.addEventListener('input', () => {
-      btnEnter.disabled = input.value.trim() === '';
+    // Lógica para liberar o botão Entrar
+    inviteInput.addEventListener('input', () => {
+      if (inviteInput.value.trim() !== '') {
+        btnEnter.disabled = false;
+        btnEnter.style.backgroundColor = '#10B981'; // Fica verde quando ativo
+      } else {
+        btnEnter.disabled = true;
+        btnEnter.style.backgroundColor = '#334155'; // Volta pro cinza
+      }
     });
   </script>
 </body>
