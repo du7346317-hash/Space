@@ -1,45 +1,160 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>SpaceX</title>
-  <style>
-    body { background-color: #0B1320; color: #FFF; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-    .login-box { background-color: #1E293B; padding: 35px 30px; border-radius: 12px; width: 320px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); text-align: center; }
-    .input-box { width: 100%; padding: 12px; margin-bottom: 15px; background-color: #0F172A; border: 1px solid #334155; color: #FFF; border-radius: 6px; box-sizing: border-box; outline: none; }
-    .input-box:focus { border-color: #10B981; }
-    .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; background-color: #10B981; color: white; transition: 0.2s; }
-    .btn:hover { background-color: #059669; }
-    .subtext { font-size: 13px; color: #94A3B8; margin-top: 15px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nossa Plataforma</title>
+    <style>
+        /* === O SEU CSS BRABO COMEÇA AQUI === */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #121216; color: #d1d5db; display: flex; height: 100vh; overflow: hidden; }
+
+        /* Telas de Autenticação */
+        .auth-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #121216; display: flex; align-items: center; justify-content: center; z-index: 2000; }
+        .auth-box { background-color: #181820; width: 400px; padding: 32px; border-radius: 12px; border: 1px solid #2d2d3d; display: flex; flex-direction: column; gap: 16px; }
+        .auth-box h2 { color: #fff; text-align: center; margin-bottom: 8px; }
+        .auth-field { display: flex; flex-direction: column; gap: 6px; }
+        .auth-field label { font-size: 12px; font-weight: bold; color: #9ca3af; text-transform: uppercase; }
+        .auth-field input { background-color: #121216; border: 1px solid #2d2d3d; border-radius: 6px; padding: 10px; color: #fff; outline: none; }
+        .btn-primary { background-color: #7c3aed; color: #fff; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s; width: 100%; }
+        .btn-primary:hover { background-color: #6d28d9; }
+        .auth-switch { text-align: center; font-size: 13px; color: #9ca3af; cursor: pointer; }
+        .auth-switch span { color: #a78bfa; }
+
+        /* Layout Principal do Aplicativo */
+        .app-layout { display: flex; width: 100%; height: 100vh; }
+        .servers-sidebar { width: 76px; background-color: #0b0b0e; display: flex; flex-direction: column; align-items: center; padding-top: 12px; gap: 10px; border-right: 1px solid #1f1f2e; }
+        .server-icon { width: 48px; height: 48px; background-color: #1a1a24; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #a78bfa; font-weight: bold; cursor: pointer; transition: 0.2s; border: 2px solid transparent; }
+        .server-icon:hover, .server-icon.active { border-radius: 16px; background-color: #7c3aed; color: #fff; }
+        .server-add { color: #10b981; font-size: 24px; }
+        .sidebar-secondary { width: 240px; background-color: #181820; display: flex; flex-direction: column; border-right: 1px solid #1f1f2e; }
+        .sidebar-header { height: 52px; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #1f1f2e; color: #fff; }
+        .sidebar-list { padding: 12px 8px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; flex: 1; }
+        .category-title { font-size: 11px; font-weight: bold; color: #6b7280; text-transform: uppercase; padding: 8px 10px 4px 10px; margin-top: 6px; }
+        .nav-item { padding: 8px 10px; border-radius: 6px; cursor: pointer; color: #9ca3af; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+        .nav-item:hover, .nav-item.active { background-color: #232331; color: #fff; }
+        .main-area { flex: 1; background-color: #121216; display: flex; flex-direction: column; }
+        .main-header { height: 52px; padding: 0 20px; display: flex; align-items: center; border-bottom: 1px solid #1f1f2e; font-weight: bold; color: #fff; }
+        .content-body { flex: 1; padding: 20px; overflow-y: auto; }
+
+        /* Classe extra para esconder a tela de login via JS */
+        .hidden { display: none !important; }
+    </style>
 </head>
 <body>
-  <div class="login-box">
-    <h2 style="margin-top: 0;">Entrar na Conta</h2>
-    <input type="email" id="email" class="input-box" placeholder="E-mail">
-    <input type="password" id="password" class="input-box" placeholder="Senha">
-    <button class="btn" onclick="fazerLogin()">Fazer Login</button>
-    <p class="subtext">Não tem conta? O cadastro exigirá verificação no e-mail.</p>
-  </div>
 
-  <script>
-    async function fazerLogin() {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      
-      const data = await response.json();
-      if(data.success) {
-        window.location.href = data.redirect; // Manda pro painel de colar convite!
-      } else {
-        alert('Erro: ' + data.message);
-      }
-    }
-  </script>
+    <!-- TELA DE LOGIN (SISTEMA ANTI-FAKE ENTRA AQUI DEPOIS) -->
+    <div class="auth-container" id="login-screen">
+        <div class="auth-box">
+            <h2>Bem-vindo de volta!</h2>
+            
+            <div class="auth-field">
+                <label>E-mail</label>
+                <input type="email" id="email" placeholder="seu@email.com">
+            </div>
+            
+            <div class="auth-field">
+                <label>Senha</label>
+                <input type="password" id="password" placeholder="••••••••">
+            </div>
+            
+            <button class="btn-primary" onclick="simularLogin()">Entrar na Conta</button>
+            
+            <div class="auth-switch">
+                Precisando de uma conta? <span>Registre-se</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- APP PRINCIPAL (SÓ APARECE DEPOIS DO LOGIN) -->
+    <div class="app-layout hidden" id="app-screen">
+        
+        <!-- Barra de Servidores (Esquerda) -->
+        <div class="servers-sidebar">
+            <div class="server-icon active">DM</div> <!-- Direct Messages / Amigos -->
+            <div class="server-icon">S1</div> <!-- Servidor 1 -->
+            <div class="server-icon server-add" onclick="abrirPainelConvite()">+</div> <!-- Add Servidor -->
+        </div>
+
+        <!-- Barra do Servidor Atual / Canais -->
+        <div class="sidebar-secondary">
+            <div class="sidebar-header">
+                Amigos & Chats
+            </div>
+            <div class="sidebar-list">
+                <div class="nav-item active">👤 Amigos</div>
+                <div class="nav-item">💬 Mensagens Diretas</div>
+                
+                <div class="category-title">Contatos Recentes</div>
+                <div class="nav-item">Carlos (Online)</div>
+                <div class="nav-item">Ana (Jogando)</div>
+            </div>
+        </div>
+
+        <!-- Área Central (Chat / Painel de Convite) -->
+        <div class="main-area">
+            <div class="main-header">
+                Painel Principal
+            </div>
+            <div class="content-body" id="main-content">
+                <p>Selecione um amigo ou um servidor para começar.</p>
+                <!-- O painel de colar o link do convite pode ser injetado aqui via JS depois -->
+            </div>
+        </div>
+    </div>
+
+    <!-- O SEU PAINEL DE CONVITE (Oculto por padrão) -->
+    <div class="auth-container hidden" id="invite-panel-screen">
+        <div class="auth-box">
+            <h2>Painel Inicial</h2>
+            <div class="auth-field">
+                <input type="text" id="invite-link" placeholder="Cole o link do servidor aqui...">
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button class="btn-primary" style="background-color: #10b981;">Criar Servidor</button>
+                <button class="btn-primary" id="btn-enter-server" style="background-color: #232331; color: #9ca3af;" disabled>Entrar</button>
+            </div>
+            <div class="auth-switch" style="margin-top: 10px;" onclick="fecharPainelConvite()">
+                <span>Cancelar e voltar</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Transição do Login para o App
+        function simularLogin() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('app-screen').classList.remove('hidden');
+        }
+
+        // Lógica do botão de convite (Botão verde)
+        function abrirPainelConvite() {
+            document.getElementById('invite-panel-screen').classList.remove('hidden');
+        }
+
+        function fecharPainelConvite() {
+            document.getElementById('invite-panel-screen').classList.add('hidden');
+            document.getElementById('invite-link').value = '';
+            document.getElementById('btn-enter-server').disabled = true;
+            document.getElementById('btn-enter-server').style.backgroundColor = '#232331';
+            document.getElementById('btn-enter-server').style.color = '#9ca3af';
+        }
+
+        // Ativa o botão "Entrar" só se tiver link
+        const inviteInput = document.getElementById('invite-link');
+        const btnEnterServer = document.getElementById('btn-enter-server');
+
+        inviteInput.addEventListener('input', () => {
+            if (inviteInput.value.trim() !== '') {
+                btnEnterServer.disabled = false;
+                btnEnterServer.style.backgroundColor = '#7c3aed';
+                btnEnterServer.style.color = '#fff';
+            } else {
+                btnEnterServer.disabled = true;
+                btnEnterServer.style.backgroundColor = '#232331';
+                btnEnterServer.style.color = '#9ca3af';
+            }
+        });
+    </script>
 </body>
 </html>
